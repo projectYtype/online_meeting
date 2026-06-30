@@ -321,10 +321,12 @@
         if (isDuplicate) return alert(t.alertDuplicateTime);
 
         // 첫 메시지
+        // 첫 메시지 (내용 먼저, 날짜/작성자 나중에)
         let initialMsg = '';
         if (rawMsg) {
-          const timeString = new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-          initialMsg = `[${timeString} - ${user.id}]\n${rawMsg}`;
+          const locale = lang === 'ko' ? 'ko-KR' : 'en-US';
+          const timeString = new Date().toLocaleString(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          initialMsg = `${rawMsg}\n[${timeString} - ${user.id}]`;
         }
 
         setLoading(true);
@@ -355,7 +357,8 @@
         if (type === 'approve') status = '승인 완료';
         if (type === 'reschedule') {
           status = '일정 조정 요청';
-          newText = `[희망시간: ${e.target.newTime.value}] ` + e.target.replyMessage.value;
+          const timeLabel = lang === 'ko' ? '희망시간' : 'Proposed Time';
+          newText = `[${timeLabel}: ${e.target.newTime.value}] ${e.target.replyMessage.value}`;
         }
         if (type === 'reject') {
           status = '일정상 진행 불가';
@@ -366,10 +369,13 @@
         const oldMsg = currentMeeting?.message || '';
         let finalMsg = oldMsg;
 
-        // ✨ 새 메시지를 위로(최신순) 쌓도록 변경
+        // ✨ 새 메시지를 위로(최신순) 쌓도록 변경 (내용 먼저, 날짜/작성자 나중에)
         if (newText) {
-          const timeString = new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-          const logEntry = `[${timeString} - ${user.id}]\n${newText}`;
+          const locale = lang === 'ko' ? 'ko-KR' : 'en-US';
+          const timeString = new Date().toLocaleString(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          
+          const logEntry = `${newText}\n[${timeString} - ${user.id}]`;
+          
           // 기존 메시지가 있으면 새 메시지를 위에, 기존 메시지를 아래에 붙입니다.
           finalMsg = oldMsg ? `${logEntry}\n\n${oldMsg}` : logEntry;
         }
@@ -675,7 +681,7 @@
                                     onClick={() => setMsgModal({isOpen: true, text: m.message})}
                                     title="클릭하여 전체 메시지 보기"
                                   >
-                                    Note: {m.message}
+                                    {m.message}
                                   </span>
                                 )}
                               </div>
