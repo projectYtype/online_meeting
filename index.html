@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>B2B Connect | Business Lounge</title>
   
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
@@ -19,7 +19,7 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
@@ -102,7 +102,6 @@
       const [meetings, setMeetings] = useState([]);
       const [favorites, setFavorites] = useState([]);
       
-      // 베이스 데이터 연동 상태
       const [baseData, setBaseData] = useState({ events: [], accounts: [] });
       
       const [eventInfo, setEventInfo] = useState(() => {
@@ -121,9 +120,9 @@
       const [msgModal, setMsgModal] = useState({ isOpen: false, text: '' });
       
       const [adminUserModal, setAdminUserModal] = useState({ isOpen: false, selectedEvent: '', userType: 'company', selectedAccountId: '', userId: '', password: '' });
-const [accountManageEvent, setAccountManageEvent] = useState(''); // 계정 관리 탭의 선택된 행사
-const [accountManageType, setAccountManageType] = useState('company'); // 'company' 또는 'buyer' 선택 탭
-const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관리 탭 행사 필터
+      const [accountManageEvent, setAccountManageEvent] = useState(''); 
+      const [accountManageType, setAccountManageType] = useState('company'); 
+      const [dashboardEvent, setDashboardEvent] = useState(''); 
       const [loginForm, setLoginForm] = useState({ id: '', pw: '', type: 'company' });
       const [myProfile, setMyProfile] = useState({ name: '', country: '', manager: '', intro: '', products: '', website: '' });
 
@@ -155,7 +154,6 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
         } catch (error) { console.error("Data load failed:", error); }
       };
 
-      // 🌟 [수정 완료] 베이스 데이터 불러오기
       const fetchBaseData = async () => {
         if (!BASE_DB_URL || BASE_DB_URL.includes('여기에')) {
             console.warn("베이스 데이터 URL이 설정되지 않았습니다.");
@@ -233,7 +231,6 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
         fetchData();
       };
 
-      // 🌟 [수정 완료] 베이스 데이터에서 유연하게 행사 이름 가져오기 
       const getParsedEvents = () => {
         let parsed = [];
         if (Array.isArray(baseData.events)) {
@@ -252,14 +249,12 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
 
       const parsedEventsList = getParsedEvents();
 
-     // 🌟 [수정 1] events 내부의 companies, buyers 데이터를 직접 추출하도록 필터링 로직 완벽 대응
       const getFilteredBaseAccounts = () => {
         const { selectedEvent, userType } = adminUserModal;
         if (!selectedEvent) return [];
 
         let targetEvent = null;
         
-        // 1. baseData.events에서 선택된 행사 객체 찾기
         if (typeof baseData.events === 'object' && !Array.isArray(baseData.events)) {
            targetEvent = baseData.events[selectedEvent] || Object.values(baseData.events).find(ev => ev.id === selectedEvent || ev.eventName === selectedEvent);
         } else if (Array.isArray(baseData.events)) {
@@ -268,13 +263,11 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
 
         let accounts = [];
 
-        // 2. 행사 객체 안의 companies(국내기업) 또는 buyers(해외바이어) 배열 가져오기
         if (targetEvent) {
           if (userType === 'company') accounts = targetEvent.companies || [];
           else if (userType === 'buyer') accounts = targetEvent.buyers || [];
         }
 
-        // 3. 기존 Accounts 시트(flat 데이터) 호환성 및 아이디 c/b 판별 로직 유지
         const flatAccounts = (baseData.accounts || []).filter(a => {
           const accEv = String(a.eventId || a.eventName || a.event || '').trim();
           const matchEv = (accEv === selectedEvent) || (targetEvent && accEv === targetEvent.eventName);
@@ -288,7 +281,6 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
           return false;
         });
 
-        // 4. 데이터 병합 및 화면 표시용 이름(companyName) 정규화
         const combined = [...accounts, ...flatAccounts];
         const unique = [];
         const seen = new Set();
@@ -297,7 +289,6 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
           const id = acc.id || acc.userId || acc.company || acc.name; 
           if (!seen.has(id)) {
             seen.add(id);
-            // 바이어는 'company', 기업은 'name'에 기업명이 있으므로 이를 통일해줍니다.
             const displayTitle = acc.company || acc.companyName || acc.name || acc.기업명;
             unique.push({ ...acc, id: id, companyName: displayTitle });
           }
@@ -307,7 +298,6 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
 
       const filteredBaseAccounts = getFilteredBaseAccounts();
 
-      // 🌟 [수정 2] 계정 생성 시 데이터 참조 대상을 baseData.accounts가 아닌 방금 추출한 filteredBaseAccounts로 변경
       const handleBaseAccountCreate = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -316,7 +306,6 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
         const targetEventObj = parsedEventsList.find(ev => ev.id === selectedEvent);
         const targetEventName = targetEventObj ? targetEventObj.name : selectedEvent;
 
-        // 수정됨: 필터링된 배열에서 선택된 계정을 찾습니다.
         const baseAcc = filteredBaseAccounts.find(a => (a.id === selectedAccountId || a.companyName === selectedAccountId || a.name === selectedAccountId));
         const companyName = baseAcc ? (baseAcc.companyName || baseAcc.name || baseAcc.기업명 || baseAcc.회사명) : '';
         const country = baseAcc ? (baseAcc.country || baseAcc.Country || baseAcc.국가) : '';
@@ -398,7 +387,7 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
         else if (status === '검토 중') { label = lang === 'ko' ? '검토 중' : 'Pending'; style = "bg-gray-100 text-gray-600 border-gray-200"; }
         else if (status === '일정상 진행 불가') { label = lang === 'ko' ? '거절됨' : 'Declined'; style = "bg-red-50 text-red-600 border-red-100"; }
         else if (status === '일정 조정 요청') { label = lang === 'ko' ? '조정 요청' : 'Reschedule'; style = "bg-orange-50 text-orange-600 border-orange-100"; }
-        return <span className={`inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase border ${style}`}>{label}</span>;
+        return <span className={`inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase border ${style} whitespace-nowrap`}>{label}</span>;
       };
 
       const LanguageToggle = () => (
@@ -408,20 +397,19 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
         </div>
       );
 
-      // 로그인 안된 상태 화면
       if (!user) {
         return (
           <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
-            <div className="absolute top-6 right-6">
+            <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
               <LanguageToggle />
             </div>
-            <div className="w-full max-w-sm fade-in">
-              <div className="text-center mb-10">
+            <div className="w-full max-w-sm fade-in mt-8 sm:mt-0">
+              <div className="text-center mb-8 sm:mb-10">
                 <div className="w-12 h-12 bg-gray-900 text-white rounded-2xl flex items-center justify-center text-xl font-bold mx-auto mb-6 shadow-xl">B.</div>
                 <h1 className="text-2xl font-semibold tracking-tight text-gray-900 mb-2">B2B Connect</h1>
                 <p className="text-sm text-gray-500">{t.signInTitle}</p>
               </div>
-              <div className="bg-white p-8 rounded-3xl border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                 <form onSubmit={handleLogin} className="space-y-6">
                   <div className="flex bg-gray-50 p-1 rounded-xl">
                     <label className={`flex-1 text-center py-2.5 rounded-lg cursor-pointer text-[13px] font-semibold transition-all ${loginForm.type === 'company' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}>
@@ -453,7 +441,6 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
         );
       }
 
-      // 파트너 필터링 (행사 필터 + 검색 필터 + 즐겨찾기 정렬)
       const partnerType = user.type === 'company' ? 'buyer' : 'company';
       let filteredPartners = profiles.filter(p => p.userType === partnerType && (p.eventName || p.profileData?.eventName || t.unnamedEvent) === eventInfo.name);
       
@@ -477,12 +464,11 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
       const mySentMeetings = meetings.filter(m => m.requesterId === user.id);
       const myReceivedMeetings = meetings.filter(m => m.receiverId === user.id);
 
-     // 🌟 [수정] 관리자 대시보드(전체 미팅 및 통계) 필터링 로직
       const selectedDashEventObj = parsedEventsList.find(e => e.id === dashboardEvent);
       const targetDashEvName = selectedDashEventObj ? selectedDashEventObj.name : dashboardEvent;
 
       const filteredDashboardMeetings = meetings.filter(m => {
-        if (!dashboardEvent) return true; // 아무것도 선택 안 하면 전체 보기
+        if (!dashboardEvent) return true;
         const reqProfile = profiles.find(p => p.userId === m.requesterId);
         const mEvName = reqProfile ? (reqProfile.eventName || reqProfile.profileData?.eventName) : '';
         return mEvName === targetDashEvName;
@@ -500,14 +486,12 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
       const pendingMtg = filteredDashboardMeetings.filter(m => m.status === '검토 중' || m.status === '일정 조정 요청').length;
       const rejectedMtg = filteredDashboardMeetings.filter(m => m.status === '일정상 진행 불가').length;
 
-      // 캘린더는 행사 필터에 관계없이 전체 시간대를 유지하거나 나중에 분리하기 위해 원본 유지
       const meetingsByTime = meetings.reduce((acc, m) => {
         if (!acc[m.sessionTime]) acc[m.sessionTime] = [];
         acc[m.sessionTime].push(m);
         return acc;
       }, {});
 
-// 🌟 [엔진 추가] 원본 데이터의 행사 config를 바탕으로 정확한 세션 시간표를 추출하는 함수
       const generateTimeSlotsFromConfig = (config) => {
         if (!config) return [];
         const startTime = config.startTime || "10:00";
@@ -533,12 +517,10 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
         const slots = [];
         let count = 0;
         
-        // 무한루프 방지 및 세션 개수만큼 시간대 생성
         for (let i = 0; i < 50 && count < sessionsPerDay; i++) {
           let start = current;
           let end = current + sessionLength;
 
-          // 세션 시작 시간이 점심시간에 걸쳐있으면 점심시간 끝나는 시간으로 강제 점프
           if (lunchS !== -1 && lunchE !== -1) {
             if (start >= lunchS && start < lunchE) {
               current = lunchE;
@@ -553,12 +535,10 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
         return slots;
       };
 
-     // 🌟 [수정 완료] 계정 목록 추출 및 행사 맞춤형 ID 규칙 생성
       const getEventAccountsList = () => {
         const targetEvent = parsedEventsList.find(e => e.id === accountManageEvent);
-        if (!targetEvent) return { companies: [], buyers: [], timeSlots: [], eventData: null }; // 💡 eventData 방어 코드 추가
+        if (!targetEvent) return { companies: [], buyers: [], timeSlots: [], eventData: null }; 
 
-        // 원본 데이터 전체에서 해당 행사 원본 오브젝트 찾기
         const rawEventObj = baseData.events[accountManageEvent] || Object.values(baseData.events).find(ev => ev.id === accountManageEvent);
         const calculatedSlots = generateTimeSlotsFromConfig(rawEventObj?.config);
 
@@ -566,7 +546,6 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
           const originalId = acc.id || acc.userId;
           const name = acc.company || acc.companyName || acc.name || acc.기업명;
           const profile = profiles.find(p => p.profileData?.name === name || p.userId === originalId);
-          // 규칙 반영: company1, company2... / buyer1, buyer2...
           const defaultGeneratedId = `${type === 'company' ? 'company' : 'buyer'}${idx}`;
 
           return {
@@ -582,13 +561,12 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
           companies: (rawEventObj?.companies || []).map((c, i) => mapAccount(c, 'company', i + 1)),
           buyers: (rawEventObj?.buyers || []).map((b, i) => mapAccount(b, 'buyer', i + 1)),
           timeSlots: calculatedSlots,
-          eventData: rawEventObj // 💡 누락되었던 행사 원본 데이터를 다시 추가!
+          eventData: rawEventObj 
         };
       };
 
       const accountList = getEventAccountsList();
 
-      // 개별 계정 생성 (행사 세션 시간표를 DB에 영구 주입)
       const quickCreateAccount = async (acc) => {
           const customId = document.getElementById(`id_${acc.originalId}`)?.value || acc.defaultGeneratedId;
           const customPw = document.getElementById(`pw_${acc.originalId}`)?.value || '1234';
@@ -599,7 +577,7 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
           setLoading(true);
           const targetEventObj = parsedEventsList.find(ev => ev.id === accountManageEvent);
           const targetEventName = targetEventObj ? targetEventObj.name : accountManageEvent;
-          const timeSlotsStr = accountList.timeSlots.join(','); // 진짜 세션 리스트
+          const timeSlotsStr = accountList.timeSlots.join(',');
 
           try {
               await fetch(ONLINE_GAS_URL, {
@@ -610,8 +588,8 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
                       userId: customId, 
                       userType: acc.type, 
                       eventName: targetEventName,
-                      timeSlots: timeSlotsStr, // 상위 필드 주입
-                      profileData: { password: customPw, name: acc.displayName, country: acc.country || acc.countryRegion || '한국', timeSlots: timeSlotsStr } // 프로필 내 주입
+                      timeSlots: timeSlotsStr, 
+                      profileData: { password: customPw, name: acc.displayName, country: acc.country || acc.countryRegion || '한국', timeSlots: timeSlotsStr } 
                     }
                   })
               });
@@ -620,7 +598,6 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
           setLoading(false);
       };
 
-      // 일괄 자동 생성 (행사 세션 시간표를 모든 미생성 계정에 완벽 주입)
       const bulkCreateMissingAccounts = async (type) => {
           const targetList = type === 'company' ? accountList.companies : accountList.buyers;
           const missing = targetList.filter(a => !a.isRegistered);
@@ -654,51 +631,53 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
           alert("모든 명단의 계정 생성이 완료되었습니다!");
           fetchData();
           setLoading(false);
-      };      return (
-        <div className="max-w-6xl mx-auto p-6 sm:p-10 pb-32 fade-in relative">
+      };      
+      
+      return (
+        <div className="max-w-6xl mx-auto p-4 sm:p-10 pb-32 fade-in relative">
           {notify && (
-            <div className="bg-gray-900 text-white px-6 py-4 rounded-2xl mb-8 flex justify-between items-center shadow-lg border border-gray-800">
-              <span className="font-bold text-sm">🔔 알림: {notify}</span>
-              <button onClick={() => setNotify('')} className="font-bold text-gray-400 hover:text-white">✕</button>
+            <div className="bg-gray-900 text-white px-4 py-3 sm:px-6 sm:py-4 rounded-xl sm:rounded-2xl mb-6 flex justify-between items-center shadow-lg border border-gray-800 text-xs sm:text-sm">
+              <span className="font-bold">🔔 알림: {notify}</span>
+              <button onClick={() => setNotify('')} className="font-bold text-gray-400 hover:text-white p-2">✕</button>
             </div>
           )}
 
-          <header className="flex justify-between items-center py-4 border-b border-gray-200 mb-10">
+          <header className="flex flex-wrap justify-between items-center py-4 border-b border-gray-200 mb-6 sm:mb-10 gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-gray-900 text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-sm">B.</div>
+              <div className="w-9 h-9 bg-gray-900 text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-sm shrink-0">B.</div>
               <div>
-                <h1 className="text-lg font-bold tracking-tight text-gray-900 leading-none mb-1">
+                <h1 className="text-base sm:text-lg font-bold tracking-tight text-gray-900 leading-none mb-1 line-clamp-1">
                   {user.type === 'admin' ? '운영 관리자 시스템' : eventInfo.name}
                 </h1>
-                <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">{t.workspace}</p>
+                <p className="text-[10px] sm:text-[11px] font-medium text-gray-500 uppercase tracking-wider">{t.workspace}</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-3 sm:gap-5">
               <div className="text-right hidden sm:block">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{user.type === 'admin' ? 'Admin' : (user.type === 'company' ? t.companyTag : t.buyerTag)}</p>
-                <p className="text-sm font-medium text-gray-900">{user.id}</p>
+                <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider">{user.type === 'admin' ? 'Admin' : (user.type === 'company' ? t.companyTag : t.buyerTag)}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-900">{user.id}</p>
               </div>
-              <div className="w-px h-8 bg-gray-200"></div>
+              <div className="hidden sm:block w-px h-8 bg-gray-200"></div>
               <LanguageToggle />
-              <button onClick={handleLogout} className="text-sm font-medium text-gray-400 hover:text-gray-900 transition-colors">{t.signOut}</button>
+              <button onClick={handleLogout} className="text-xs sm:text-sm font-medium text-gray-400 hover:text-gray-900 transition-colors whitespace-nowrap">{t.signOut}</button>
             </div>
           </header>
 
-          <div className="flex overflow-x-auto mb-10 pb-2">
+          <div className="flex overflow-x-auto mb-6 sm:mb-10 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
             <div className="inline-flex bg-gray-100 p-1 rounded-xl">
             {user.type === 'admin' ? (
               <>
-                <button onClick={() => setActiveTab('admin_dashboard')} className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${activeTab==='admin_dashboard'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.adminTab}</button>
-                <button onClick={() => setActiveTab('admin_calendar')} className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${activeTab==='admin_calendar'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.adminCalendar}</button>
-<button onClick={() => setActiveTab('admin_accounts')} className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${activeTab==='admin_accounts'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>계정 관리</button>
+                <button onClick={() => setActiveTab('admin_dashboard')} className={`px-4 sm:px-6 py-2 sm:py-2.5 text-[13px] sm:text-sm font-semibold rounded-lg transition-all whitespace-nowrap ${activeTab==='admin_dashboard'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.adminTab}</button>
+                <button onClick={() => setActiveTab('admin_calendar')} className={`px-4 sm:px-6 py-2 sm:py-2.5 text-[13px] sm:text-sm font-semibold rounded-lg transition-all whitespace-nowrap ${activeTab==='admin_calendar'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.adminCalendar}</button>
+                <button onClick={() => setActiveTab('admin_accounts')} className={`px-4 sm:px-6 py-2 sm:py-2.5 text-[13px] sm:text-sm font-semibold rounded-lg transition-all whitespace-nowrap ${activeTab==='admin_accounts'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>계정 관리</button>
               </>
             ) : (
               <>
-                <button onClick={() => setActiveTab('timetable')} className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${activeTab==='timetable'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.timetable}</button>
-                <button onClick={() => setActiveTab('partners')} className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${activeTab==='partners'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.participants}</button>
-                <button onClick={() => setActiveTab('schedule')} className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${activeTab==='schedule'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.schedule}</button>
-                <button onClick={() => setActiveTab('profile')} className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${activeTab==='profile'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.settings}</button>
+                <button onClick={() => setActiveTab('timetable')} className={`px-4 sm:px-6 py-2 sm:py-2.5 text-[13px] sm:text-sm font-semibold rounded-lg transition-all whitespace-nowrap ${activeTab==='timetable'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.timetable}</button>
+                <button onClick={() => setActiveTab('partners')} className={`px-4 sm:px-6 py-2 sm:py-2.5 text-[13px] sm:text-sm font-semibold rounded-lg transition-all whitespace-nowrap ${activeTab==='partners'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.participants}</button>
+                <button onClick={() => setActiveTab('schedule')} className={`px-4 sm:px-6 py-2 sm:py-2.5 text-[13px] sm:text-sm font-semibold rounded-lg transition-all whitespace-nowrap ${activeTab==='schedule'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.schedule}</button>
+                <button onClick={() => setActiveTab('profile')} className={`px-4 sm:px-6 py-2 sm:py-2.5 text-[13px] sm:text-sm font-semibold rounded-lg transition-all whitespace-nowrap ${activeTab==='profile'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.settings}</button>
               </>
             )}
             </div>
@@ -707,21 +686,21 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
           <div className="fade-in" key={activeTab}>
             {/* 일반 탭 0: 나의 시간표 */}
             {activeTab === 'timetable' && user.type !== 'admin' && (
-              <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-200/80">
-                <h2 className="text-xl font-bold mb-6 border-b border-gray-100 pb-4">나의 미팅 시간표</h2>
+              <div className="bg-white p-5 sm:p-8 rounded-3xl shadow-sm border border-gray-200/80">
+                <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 border-b border-gray-100 pb-4">나의 미팅 시간표</h2>
                 <div className="space-y-4">
                   {(eventInfo.timeSlots.length > 0 ? eventInfo.timeSlots : DEFAULT_TIME_SLOTS).map(time => {
                     const mtg = meetings.find(m => (m.requesterId === user.id || m.receiverId === user.id) && m.sessionTime === time && m.status === '승인 완료');
                     return (
-                      <div key={time} className="flex flex-col sm:flex-row border border-gray-100 rounded-2xl p-5 bg-gray-50/50 items-center hover:bg-gray-50 transition">
-                        <div className="w-36 font-bold text-blue-600 text-lg">{time}</div>
-                        <div className="flex-1 w-full mt-3 sm:mt-0">
+                      <div key={time} className="flex flex-col sm:flex-row border border-gray-100 rounded-2xl p-4 sm:p-5 bg-gray-50/50 items-start sm:items-center hover:bg-gray-50 transition">
+                        <div className="w-auto sm:w-36 font-bold text-blue-600 text-base sm:text-lg mb-2 sm:mb-0">{time}</div>
+                        <div className="flex-1 w-full">
                           {mtg ? (
-                            <div className="flex justify-between items-center w-full">
-                              <span className="font-bold text-gray-900 text-lg">미팅 대상: {mtg.requesterId === user.id ? mtg.receiverId : mtg.requesterId}</span>
-                              {mtg.zoomLink && <a href={mtg.zoomLink} target="_blank" className="bg-white text-blue-700 px-5 py-2.5 rounded-xl font-bold text-sm border border-blue-200 hover:bg-blue-50 transition shadow-sm">Zoom 입장</a>}
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3">
+                              <span className="font-bold text-gray-900 text-sm sm:text-lg">대상: {mtg.requesterId === user.id ? mtg.receiverId : mtg.requesterId}</span>
+                              {mtg.zoomLink && <a href={mtg.zoomLink} target="_blank" className="bg-white text-blue-700 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border border-blue-200 hover:bg-blue-50 transition shadow-sm w-full sm:w-auto text-center whitespace-nowrap">Zoom 입장</a>}
                             </div>
-                          ) : <span className="text-gray-400 font-medium">일정 없음</span>}
+                          ) : <span className="text-gray-400 font-medium text-sm">일정 없음</span>}
                         </div>
                       </div>
                     );
@@ -733,43 +712,43 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
             {/* 일반 탭 1: 참가 파트너 리스트 */}
             {activeTab === 'partners' && user.type !== 'admin' && (
               <div>
-                <div className="flex gap-3 mb-8 bg-white p-3 rounded-2xl shadow-sm border border-gray-200/80 items-center">
-                  <select className="border-none bg-gray-50 text-gray-700 font-semibold px-4 py-3 rounded-xl text-sm outline-none ring-1 ring-gray-200 focus:ring-gray-900" value={searchOpt.type} onChange={e=>setSearchOpt({...searchOpt, type: e.target.value})}>
+                <div className="flex flex-col sm:flex-row gap-3 mb-6 sm:mb-8 bg-white p-3 rounded-2xl shadow-sm border border-gray-200/80 items-center">
+                  <select className="w-full sm:w-auto border-none bg-gray-50 text-gray-700 font-semibold px-4 py-3 rounded-xl text-sm outline-none ring-1 ring-gray-200 focus:ring-gray-900" value={searchOpt.type} onChange={e=>setSearchOpt({...searchOpt, type: e.target.value})}>
                     <option value="all">전체 검색</option><option value="name">기업명</option>
                     <option value="country">국가</option><option value="product">품목</option>
                   </select>
-                  <input type="text" className="flex-1 border-none bg-gray-50 px-4 py-3 rounded-xl text-sm outline-none ring-1 ring-gray-200 focus:ring-gray-900" placeholder="검색어를 입력하세요..." value={searchOpt.keyword} onChange={e=>setSearchOpt({...searchOpt, keyword: e.target.value})} />
+                  <input type="text" className="w-full flex-1 border-none bg-gray-50 px-4 py-3 rounded-xl text-sm outline-none ring-1 ring-gray-200 focus:ring-gray-900" placeholder="검색어를 입력하세요..." value={searchOpt.keyword} onChange={e=>setSearchOpt({...searchOpt, keyword: e.target.value})} />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {filteredPartners.length === 0 && (
-                    <div className="col-span-full py-20 text-center border border-dashed border-gray-200 rounded-2xl">
+                    <div className="col-span-full py-16 sm:py-20 text-center border border-dashed border-gray-200 rounded-2xl">
                       <p className="text-sm text-gray-500">{t.noPartners}</p>
                     </div>
                   )}
                   {filteredPartners.map(p => {
                     const isFav = favorites.some(f => f.userId === user.id && f.targetId === p.userId);
                     return (
-                      <div key={p.userId} onClick={() => setDetailModal({ isOpen: true, profile: p })} className="bg-white p-7 rounded-2xl border border-gray-200/80 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:border-gray-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full group cursor-pointer relative">
-                        <button onClick={(e) => toggleFavorite(p.userId, e)} className="absolute top-6 right-6 text-2xl transition-transform hover:scale-110" title="즐겨찾기">{isFav ? '⭐' : '☆'}</button>
+                      <div key={p.userId} onClick={() => setDetailModal({ isOpen: true, profile: p })} className="bg-white p-5 sm:p-7 rounded-2xl border border-gray-200/80 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:border-gray-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full group cursor-pointer relative">
+                        <button onClick={(e) => toggleFavorite(p.userId, e)} className="absolute top-5 sm:top-6 right-5 sm:right-6 text-2xl transition-transform hover:scale-110" title="즐겨찾기">{isFav ? '⭐' : '☆'}</button>
                         
-                        <div className="flex justify-between items-start mb-6 pr-8">
-                          <span className="px-2.5 py-1 bg-gray-50 text-gray-600 rounded-md text-[11px] font-bold tracking-wide uppercase border border-gray-100">{p.profileData.country || 'Unknown'}</span>
-                          <span className="text-[11px] font-medium text-gray-400">{p.userId}</span>
+                        <div className="flex justify-between items-start mb-4 sm:mb-6 pr-8">
+                          <span className="px-2 py-1 sm:px-2.5 sm:py-1 bg-gray-50 text-gray-600 rounded-md text-[10px] sm:text-[11px] font-bold tracking-wide uppercase border border-gray-100">{p.profileData.country || 'Unknown'}</span>
+                          <span className="text-[10px] sm:text-[11px] font-medium text-gray-400">{p.userId}</span>
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight">{p.profileData.name || 'Untitled Company'}</h3>
-                        <p className="text-sm text-gray-500 leading-relaxed line-clamp-3 mb-8 flex-grow">{p.profileData.intro || 'No description provided.'}</p>
+                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 leading-tight">{p.profileData.name || 'Untitled Company'}</h3>
+                        <p className="text-xs sm:text-sm text-gray-500 leading-relaxed line-clamp-3 mb-6 sm:mb-8 flex-grow">{p.profileData.intro || 'No description provided.'}</p>
                         
-                        <div className="space-y-3 mb-8 pt-6 border-t border-gray-100">
-                          <div className="flex justify-between items-center text-sm gap-4">
+                        <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8 pt-4 sm:pt-6 border-t border-gray-100">
+                          <div className="flex justify-between items-center text-xs sm:text-sm gap-4">
                             <span className="text-gray-400 font-medium whitespace-nowrap shrink-0">{t.manager}</span>
                             <span className="text-gray-900 font-medium text-right truncate">{p.profileData.manager || '-'}</span>
                           </div>
-                          <div className="flex justify-between items-center text-sm gap-4">
+                          <div className="flex justify-between items-center text-xs sm:text-sm gap-4">
                             <span className="text-gray-400 font-medium whitespace-nowrap shrink-0">{t.productsInterests}</span>
                             <span className="text-gray-900 font-medium text-right truncate" title={p.profileData.products}>{p.profileData.products || '-'}</span>
                           </div>
-                          <div className="flex justify-between items-center text-sm gap-4">
+                          <div className="flex justify-between items-center text-xs sm:text-sm gap-4">
                             <span className="text-gray-400 font-medium whitespace-nowrap shrink-0">{t.website}</span>
                             <span className="text-gray-900 font-medium text-right truncate">
                               {p.profileData.website ? (
@@ -778,7 +757,7 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
                             </span>
                           </div>
                         </div>
-                        <button onClick={(e) => { e.stopPropagation(); setApplyModal({ isOpen: true, targetId: p.userId, targetName: p.profileData.name || p.userId }); }} className="w-full bg-gray-50 text-gray-900 font-semibold py-3 rounded-xl hover:bg-gray-900 hover:text-white transition-colors duration-200 text-sm">
+                        <button onClick={(e) => { e.stopPropagation(); setApplyModal({ isOpen: true, targetId: p.userId, targetName: p.profileData.name || p.userId }); }} className="w-full bg-gray-50 text-gray-900 font-semibold py-2.5 sm:py-3 rounded-xl hover:bg-gray-900 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
                           {t.requestMeeting}
                         </button>
                       </div>
@@ -790,45 +769,47 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
 
             {/* 일반 탭 2: 미팅 일정 */}
             {activeTab === 'schedule' && user.type !== 'admin' && (
-              <div className="space-y-12">
+              <div className="space-y-8 sm:space-y-12">
                 <div className="bg-white rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
-                  <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
-                    <h3 className="text-base font-bold text-gray-900">{t.receivedRequests}</h3>
-                    <p className="text-[13px] text-gray-500 mt-1">{t.receivedDesc}</p>
+                  <div className="px-5 py-4 sm:px-8 sm:py-6 border-b border-gray-100 bg-gray-50/50">
+                    <h3 className="text-sm sm:text-base font-bold text-gray-900">{t.receivedRequests}</h3>
+                    <p className="text-[11px] sm:text-[13px] text-gray-500 mt-1">{t.receivedDesc}</p>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-white">
+                    <table className="w-full text-xs sm:text-sm text-left">
+                      <thead className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-white border-b border-gray-100">
                         <tr>
-                          <th className="px-8 py-4 font-semibold">{t.thRequester}</th><th className="px-8 py-4 font-semibold">{t.thTime}</th>
-                          <th className="px-8 py-4 font-semibold">{t.thMessage}</th><th className="px-8 py-4 font-semibold">{t.thStatus}</th>
-                          <th className="px-8 py-4 font-semibold text-right">{t.thAction}</th>
+                          <th className="px-4 py-3 sm:px-8 sm:py-4 font-semibold whitespace-nowrap">{t.thRequester}</th>
+                          <th className="px-4 py-3 sm:px-8 sm:py-4 font-semibold whitespace-nowrap">{t.thTime}</th>
+                          <th className="px-4 py-3 sm:px-8 sm:py-4 font-semibold whitespace-nowrap">{t.thMessage}</th>
+                          <th className="px-4 py-3 sm:px-8 sm:py-4 font-semibold whitespace-nowrap">{t.thStatus}</th>
+                          <th className="px-4 py-3 sm:px-8 sm:py-4 font-semibold text-right whitespace-nowrap">{t.thAction}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {myReceivedMeetings.length===0 && <tr><td colSpan="5" className="px-8 py-12 text-center text-gray-400 text-sm">{t.noRequests}</td></tr>}
+                        {myReceivedMeetings.length===0 && <tr><td colSpan="5" className="px-4 py-8 sm:px-8 sm:py-12 text-center text-gray-400 text-xs sm:text-sm">{t.noRequests}</td></tr>}
                         {myReceivedMeetings.map(m => (
                           <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
-                            <td className="px-8 py-5 font-medium text-gray-900">{m.requesterId}</td>
-                            <td className="px-8 py-5 font-medium text-gray-900">{m.sessionTime}</td>
+                            <td className="px-4 py-3 sm:px-8 sm:py-5 font-medium text-gray-900 whitespace-nowrap">{m.requesterId}</td>
+                            <td className="px-4 py-3 sm:px-8 sm:py-5 font-medium text-gray-900 whitespace-nowrap">{m.sessionTime}</td>
                             <td 
-                              className="px-8 py-5 text-gray-500 max-w-[200px] truncate cursor-pointer hover:text-gray-900 underline-offset-4 hover:underline" 
+                              className="px-4 py-3 sm:px-8 sm:py-5 text-gray-500 max-w-[150px] sm:max-w-[200px] truncate cursor-pointer hover:text-gray-900 underline-offset-4 hover:underline" 
                               onClick={() => m.message && setMsgModal({isOpen: true, text: m.message})} title="클릭하여 전체 메시지 보기"
                             >
                               {m.message ? m.message.split('\n').pop() : '-'}
                             </td>
-                            <td className="px-8 py-5 whitespace-nowrap">{getStatusBadge(m.status)}</td>
-                            <td className="px-8 py-5 text-right whitespace-nowrap">
+                            <td className="px-4 py-3 sm:px-8 sm:py-5 whitespace-nowrap">{getStatusBadge(m.status)}</td>
+                            <td className="px-4 py-3 sm:px-8 sm:py-5 text-right whitespace-nowrap">
                               {checkIsMyTurn(m) ? (
-                                <div className="flex justify-end gap-2">
-                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'approve'})} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors">{t.accept}</button>
-                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reschedule'})} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">{t.reschedule}</button>
-                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reject'})} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors">{t.decline}</button>
+                                <div className="flex justify-end gap-1.5 sm:gap-2">
+                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'approve'})} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors">{t.accept}</button>
+                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reschedule'})} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">{t.reschedule}</button>
+                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reject'})} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors">{t.decline}</button>
                                 </div>
                               ) : m.status === '일정 조정 요청' ? (
-                                <span className="text-[12px] font-medium text-gray-400">답변 대기 중</span>
+                                <span className="text-[11px] sm:text-[12px] font-medium text-gray-400">답변 대기 중</span>
                               ) : m.status === '승인 완료' && m.zoomLink ? (
-                                <a href={m.zoomLink} target="_blank" className="inline-block px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-100">Join Zoom</a>
+                                <a href={m.zoomLink} target="_blank" className="inline-block px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-100">Join Zoom</a>
                               ) : <span className="text-gray-300">-</span>}
                             </td>
                           </tr>
@@ -839,46 +820,48 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
                 </div>
 
                 <div className="bg-white rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
-                  <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
-                    <h3 className="text-base font-bold text-gray-900">{t.sentRequests}</h3>
-                    <p className="text-[13px] text-gray-500 mt-1">{t.sentDesc}</p>
+                  <div className="px-5 py-4 sm:px-8 sm:py-6 border-b border-gray-100 bg-gray-50/50">
+                    <h3 className="text-sm sm:text-base font-bold text-gray-900">{t.sentRequests}</h3>
+                    <p className="text-[11px] sm:text-[13px] text-gray-500 mt-1">{t.sentDesc}</p>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-white">
+                    <table className="w-full text-xs sm:text-sm text-left">
+                      <thead className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-white border-b border-gray-100">
                         <tr>
-                          <th className="px-8 py-4 font-semibold">{t.thRecipient}</th><th className="px-8 py-4 font-semibold">{t.thTime}</th>
-                          <th className="px-8 py-4 font-semibold">{t.thStatus}</th><th className="px-8 py-4 font-semibold text-right">{t.thAction}</th>
+                          <th className="px-4 py-3 sm:px-8 sm:py-4 font-semibold whitespace-nowrap">{t.thRecipient}</th>
+                          <th className="px-4 py-3 sm:px-8 sm:py-4 font-semibold whitespace-nowrap">{t.thTime}</th>
+                          <th className="px-4 py-3 sm:px-8 sm:py-4 font-semibold whitespace-nowrap">{t.thStatus}</th>
+                          <th className="px-4 py-3 sm:px-8 sm:py-4 font-semibold text-right whitespace-nowrap">{t.thAction}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {mySentMeetings.length===0 && <tr><td colSpan="4" className="px-8 py-12 text-center text-gray-400 text-sm">{t.noSentRequests}</td></tr>}
+                        {mySentMeetings.length===0 && <tr><td colSpan="4" className="px-4 py-8 sm:px-8 sm:py-12 text-center text-gray-400 text-xs sm:text-sm">{t.noSentRequests}</td></tr>}
                         {mySentMeetings.map(m => (
                           <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
-                            <td className="px-8 py-5 font-medium text-gray-900">{m.receiverId}</td>
-                            <td className="px-8 py-5 font-medium text-gray-900">{m.sessionTime}</td>
-                            <td className="px-8 py-5">
-                              <div className="flex items-center gap-3">
+                            <td className="px-4 py-3 sm:px-8 sm:py-5 font-medium text-gray-900 whitespace-nowrap">{m.receiverId}</td>
+                            <td className="px-4 py-3 sm:px-8 sm:py-5 font-medium text-gray-900 whitespace-nowrap">{m.sessionTime}</td>
+                            <td className="px-4 py-3 sm:px-8 sm:py-5 whitespace-nowrap">
+                              <div className="flex items-center gap-2 sm:gap-3">
                                 {getStatusBadge(m.status)}
                                 {m.message && (
-                                  <span className="text-[12px] text-gray-500 truncate max-w-[200px] cursor-pointer hover:text-gray-900 underline-offset-4 hover:underline" onClick={() => setMsgModal({isOpen: true, text: m.message})} title="클릭하여 전체 메시지 보기">
+                                  <span className="text-[11px] sm:text-[12px] text-gray-500 truncate max-w-[100px] sm:max-w-[200px] cursor-pointer hover:text-gray-900 underline-offset-4 hover:underline" onClick={() => setMsgModal({isOpen: true, text: m.message})} title="클릭하여 전체 메시지 보기">
                                     Note: {m.message.split('\n').pop()}
                                   </span>
                                 )}
                               </div>
                             </td>
-                            <td className="px-8 py-5 text-right whitespace-nowrap">
+                            <td className="px-4 py-3 sm:px-8 sm:py-5 text-right whitespace-nowrap">
                               {checkIsMyTurn(m) ? (
-                                <div className="flex justify-end gap-2">
-                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'approve'})} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors">{t.accept}</button>
-                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reschedule'})} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">{t.reschedule}</button>
-                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reject'})} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors">{t.decline}</button>
+                                <div className="flex justify-end gap-1.5 sm:gap-2">
+                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'approve'})} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors">{t.accept}</button>
+                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reschedule'})} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">{t.reschedule}</button>
+                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reject'})} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors">{t.decline}</button>
                                 </div>
                               ) : m.status === '검토 중' || m.status === '일정 조정 요청' ? (
-                                <span className="text-[12px] font-medium text-gray-400">답변 대기 중</span>
+                                <span className="text-[11px] sm:text-[12px] font-medium text-gray-400">답변 대기 중</span>
                               ) : m.status === '승인 완료' ? (
-                                m.zoomLink ? <a href={m.zoomLink} target="_blank" className="inline-block px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-100">Join Zoom</a> 
-                                : <span className="text-[12px] font-medium text-gray-400">{t.waitingLink}</span>
+                                m.zoomLink ? <a href={m.zoomLink} target="_blank" className="inline-block px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-100">Join Zoom</a> 
+                                : <span className="text-[11px] sm:text-[12px] font-medium text-gray-400">{t.waitingLink}</span>
                               ) : <span className="text-gray-300">-</span>}
                             </td>
                           </tr>
@@ -893,40 +876,40 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
             {/* 일반 탭 3: 기업 프로필 */}
             {activeTab === 'profile' && user.type !== 'admin' && (
               <div className="bg-white rounded-3xl border border-gray-200/80 shadow-sm max-w-3xl mx-auto overflow-hidden">
-                <div className="px-8 py-8 border-b border-gray-100">
-                  <h3 className="text-xl font-bold text-gray-900">{t.companyProfile}</h3>
-                  <p className="text-sm text-gray-500 mt-2">{t.profileDesc}</p>
+                <div className="px-5 py-6 sm:px-8 sm:py-8 border-b border-gray-100">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">{t.companyProfile}</h3>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-2">{t.profileDesc}</p>
                 </div>
-                <div className="p-8 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-5 sm:p-8 space-y-5 sm:space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                     <div className="md:col-span-2">
-                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.companyName}</label>
-                      <input type="text" value={myProfile.name || ''} onChange={e=>setMyProfile({...myProfile, name:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
+                      <label className="block text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.companyName}</label>
+                      <input type="text" value={myProfile.name || ''} onChange={e=>setMyProfile({...myProfile, name:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
                     </div>
                     <div>
-                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.countryRegion}</label>
-                      <input type="text" value={myProfile.country || ''} onChange={e=>setMyProfile({...myProfile, country:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
+                      <label className="block text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.countryRegion}</label>
+                      <input type="text" value={myProfile.country || ''} onChange={e=>setMyProfile({...myProfile, country:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
                     </div>
                     <div>
-                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.contactPerson}</label>
-                      <input type="text" value={myProfile.manager || ''} onChange={e=>setMyProfile({...myProfile, manager:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
+                      <label className="block text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.contactPerson}</label>
+                      <input type="text" value={myProfile.manager || ''} onChange={e=>setMyProfile({...myProfile, manager:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.aboutCompany}</label>
-                      <textarea value={myProfile.intro || ''} onChange={e=>setMyProfile({...myProfile, intro:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm h-32 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all resize-none"></textarea>
+                      <label className="block text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.aboutCompany}</label>
+                      <textarea value={myProfile.intro || ''} onChange={e=>setMyProfile({...myProfile, intro:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm h-32 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all resize-none"></textarea>
                     </div>
                     <div>
-                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.productsInterests}</label>
-                      <input type="text" value={myProfile.products || ''} onChange={e=>setMyProfile({...myProfile, products:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
+                      <label className="block text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.productsInterests}</label>
+                      <input type="text" value={myProfile.products || ''} onChange={e=>setMyProfile({...myProfile, products:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
                     </div>
                     <div>
-                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.websiteUrl}</label>
-                      <input type="url" value={myProfile.website || ''} onChange={e=>setMyProfile({...myProfile, website:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" placeholder="https://" />
+                      <label className="block text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.websiteUrl}</label>
+                      <input type="url" value={myProfile.website || ''} onChange={e=>setMyProfile({...myProfile, website:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" placeholder="https://" />
                     </div>
                   </div>
                 </div>
-                <div className="px-8 py-5 bg-gray-50/80 border-t border-gray-100 flex justify-end">
-                  <button onClick={saveProfile} className="px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-black hover:shadow-md transition-all duration-200">
+                <div className="px-5 py-4 sm:px-8 sm:py-5 bg-gray-50/80 border-t border-gray-100 flex justify-end">
+                  <button onClick={saveProfile} className="px-5 py-2.5 sm:px-6 sm:py-2.5 bg-gray-900 text-white text-xs sm:text-sm font-medium rounded-xl hover:bg-black hover:shadow-md transition-all duration-200 w-full sm:w-auto">
                     {loading ? t.saving : t.saveChanges}
                   </button>
                 </div>
@@ -936,72 +919,71 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
             {/* 🌟 관리자 탭 1: 전체 미팅 관리 */}
             {activeTab === 'admin_dashboard' && user.type === 'admin' && (
               <div className="fade-in">
-                {/* 🌟 행사 필터 드롭다운 영역 추가 */}
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 bg-white p-5 rounded-3xl border shadow-sm">
-                  <h2 className="text-xl font-bold text-gray-900 whitespace-nowrap">전체 미팅 관리</h2>
-                  <select value={dashboardEvent} onChange={e => setDashboardEvent(e.target.value)} className="w-full sm:w-auto px-5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-4 bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border shadow-sm">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 whitespace-nowrap">전체 미팅 관리</h2>
+                  <select value={dashboardEvent} onChange={e => setDashboardEvent(e.target.value)} className="w-full sm:w-auto px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all">
                     <option value="">-- 전체 행사 보기 --</option>
                     {parsedEventsList.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  <div className="bg-white p-5 rounded-2xl border shadow-sm">
-                    <p className="text-sm text-gray-500 font-bold">{dashboardEvent ? '참가자 (선택 행사)' : '총 참가자 (전체)'}</p>
-                    <p className="text-2xl font-bold">{totalCompanies + totalBuyers} <span className="text-sm font-normal text-gray-400">(기업 {totalCompanies} / 바이어 {totalBuyers})</span></p>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                  <div className="bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl border shadow-sm">
+                    <p className="text-xs sm:text-sm text-gray-500 font-bold">{dashboardEvent ? '참가자 (선택)' : '총 참가자 (전체)'}</p>
+                    <p className="text-xl sm:text-2xl font-bold mt-1">{totalCompanies + totalBuyers} <span className="block sm:inline text-[10px] sm:text-sm font-normal text-gray-400 mt-1 sm:mt-0">(기업 {totalCompanies} / 바이어 {totalBuyers})</span></p>
                   </div>
-                  <div className="bg-white p-5 rounded-2xl border shadow-sm">
-                    <p className="text-sm text-blue-500 font-bold">총 미팅</p>
-                    <p className="text-2xl font-bold">{filteredDashboardMeetings.length}</p>
+                  <div className="bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl border shadow-sm">
+                    <p className="text-xs sm:text-sm text-blue-500 font-bold">총 미팅</p>
+                    <p className="text-xl sm:text-2xl font-bold mt-1">{filteredDashboardMeetings.length}</p>
                   </div>
-                  <div className="bg-white p-5 rounded-2xl border shadow-sm">
-                    <p className="text-sm text-green-500 font-bold">승인 완료</p>
-                    <p className="text-2xl font-bold">{approvedMtg}</p>
+                  <div className="bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl border shadow-sm">
+                    <p className="text-xs sm:text-sm text-green-500 font-bold">승인 완료</p>
+                    <p className="text-xl sm:text-2xl font-bold mt-1">{approvedMtg}</p>
                   </div>
-                  <div className="bg-white p-5 rounded-2xl border shadow-sm">
-                    <p className="text-sm text-red-500 font-bold">대기/거절</p>
-                    <p className="text-2xl font-bold">{pendingMtg} / {rejectedMtg}</p>
+                  <div className="bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl border shadow-sm">
+                    <p className="text-xs sm:text-sm text-red-500 font-bold">대기/거절</p>
+                    <p className="text-xl sm:text-2xl font-bold mt-1">{pendingMtg} / {rejectedMtg}</p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-4 mb-6 bg-white p-5 rounded-2xl border shadow-sm items-center">
-                  <button onClick={() => setAdminAddModal({isOpen:true, requesterId:'', receiverId:'', sessionTime:''})} className="px-5 py-2.5 bg-gray-900 text-white rounded-xl font-bold text-sm">+ 미팅 강제 추가</button>
-                  <div className="w-px h-6 bg-gray-200 mx-2"></div>
-                  <button onClick={() => setAdminUserModal({...adminUserModal, isOpen:true})} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition">+ 행사 기반 계정 생성</button>
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-6 bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl border shadow-sm sm:items-center">
+                  <button onClick={() => setAdminAddModal({isOpen:true, requesterId:'', receiverId:'', sessionTime:''})} className="w-full sm:w-auto px-4 py-2.5 bg-gray-900 text-white rounded-xl font-bold text-xs sm:text-sm">+ 미팅 강제 추가</button>
+                  <div className="hidden sm:block w-px h-6 bg-gray-200 mx-2"></div>
+                  <button onClick={() => setAdminUserModal({...adminUserModal, isOpen:true})} className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs sm:text-sm hover:bg-indigo-700 transition">+ 행사 기반 계정 생성</button>
                 </div>
 
-                <div className="bg-white rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="bg-gray-50 text-gray-500 font-bold text-[11px] uppercase tracking-wider border-b border-gray-100">
+                    <table className="w-full text-xs sm:text-sm text-left">
+                      <thead className="bg-gray-50 text-gray-500 font-bold text-[10px] sm:text-[11px] uppercase tracking-wider border-b border-gray-100">
                         <tr>
-                          <th className="px-6 py-4 whitespace-nowrap">행사명</th>
-                          <th className="px-6 py-4 whitespace-nowrap">신청자</th>
-                          <th className="px-6 py-4 whitespace-nowrap">피신청자</th>
-                          <th className="px-6 py-4 whitespace-nowrap">시간</th>
-                          <th className="px-6 py-4 whitespace-nowrap">상태</th>
-                          <th className="px-6 py-4 w-1/4 min-w-[200px]">관리자 메모</th>
-                          <th className="px-6 py-4 text-center whitespace-nowrap">삭제</th>
+                          <th className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">행사명</th>
+                          <th className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">신청자</th>
+                          <th className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">피신청자</th>
+                          <th className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">시간</th>
+                          <th className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">상태</th>
+                          <th className="px-4 py-3 sm:px-6 sm:py-4 min-w-[150px] sm:min-w-[200px]">관리자 메모</th>
+                          <th className="px-4 py-3 sm:px-6 sm:py-4 text-center whitespace-nowrap">삭제</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {filteredDashboardMeetings.length === 0 && (
-                          <tr><td colSpan="7" className="px-6 py-12 text-center text-gray-400 font-medium">조회된 미팅이 없습니다.</td></tr>
+                          <tr><td colSpan="7" className="px-4 py-8 sm:px-6 sm:py-12 text-center text-gray-400 font-medium text-xs sm:text-sm">조회된 미팅이 없습니다.</td></tr>
                         )}
                         {filteredDashboardMeetings.map(m => {
                           const reqProfile = profiles.find(p => p.userId === m.requesterId);
                           const mEvName = reqProfile ? (reqProfile.eventName || reqProfile.profileData?.eventName) : '-';
                           return (
                             <tr key={m.id} className="hover:bg-gray-50/50">
-                              <td className="px-6 py-4 font-bold text-indigo-600 text-[12px] whitespace-nowrap">{mEvName}</td>
-                              <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{m.requesterId}</td>
-                              <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{m.receiverId}</td>
-                              <td className="px-6 py-4 font-bold text-blue-600 whitespace-nowrap">{m.sessionTime}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(m.status)}</td>
-                              <td className="px-6 py-4">
+                              <td className="px-4 py-3 sm:px-6 sm:py-4 font-bold text-indigo-600 text-[11px] sm:text-[12px] whitespace-nowrap">{mEvName}</td>
+                              <td className="px-4 py-3 sm:px-6 sm:py-4 font-medium text-gray-900 whitespace-nowrap">{m.requesterId}</td>
+                              <td className="px-4 py-3 sm:px-6 sm:py-4 font-medium text-gray-900 whitespace-nowrap">{m.receiverId}</td>
+                              <td className="px-4 py-3 sm:px-6 sm:py-4 font-bold text-blue-600 whitespace-nowrap">{m.sessionTime}</td>
+                              <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">{getStatusBadge(m.status)}</td>
+                              <td className="px-4 py-3 sm:px-6 sm:py-4">
                                 <input type="text" defaultValue={m.adminMemo} onBlur={(e) => updateAdminMemo(m.id, e.target.value)} placeholder="메모 입력..." className="w-full border border-gray-200 p-2 rounded-lg text-xs bg-yellow-50/50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-yellow-400 transition" />
                               </td>
-                              <td className="px-6 py-4 text-center whitespace-nowrap">
+                              <td className="px-4 py-3 sm:px-6 sm:py-4 text-center whitespace-nowrap">
                                 <button onClick={async () => {
                                   if(confirm("삭제하시겠습니까?")){
                                     await fetch(ONLINE_GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'delete_meeting', data: { id: m.id } }) });
@@ -1020,16 +1002,16 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
             )}
             
             {activeTab === 'admin_calendar' && user.type === 'admin' && (
-              <div className="bg-white p-8 rounded-3xl border shadow-sm">
-                <h2 className="text-2xl font-bold mb-8">시간대별 미팅 현황</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border shadow-sm">
+                <h2 className="text-lg sm:text-2xl font-bold mb-6 sm:mb-8">시간대별 미팅 현황</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {Object.keys(meetingsByTime).sort().map(time => (
-                    <div key={time} className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                      <div className="bg-blue-600 text-white font-bold px-5 py-3 text-lg">{time}</div>
+                    <div key={time} className="border border-gray-200 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm">
+                      <div className="bg-blue-600 text-white font-bold px-4 py-2 sm:px-5 sm:py-3 text-sm sm:text-lg">{time}</div>
                       <ul className="divide-y divide-gray-100 bg-white">
                         {meetingsByTime[time].map(m => (
-                          <li key={m.id} className="p-4 flex flex-col gap-2 text-sm">
-                            <div className="flex justify-between items-center">
+                          <li key={m.id} className="p-3 sm:p-4 flex flex-col gap-2 text-xs sm:text-sm">
+                            <div className="flex justify-between items-center flex-wrap gap-2">
                               <span className="font-bold text-gray-900">{m.requesterId} <span className="text-gray-400 mx-1">↔</span> {m.receiverId}</span>
                               {getStatusBadge(m.status)}
                             </div>
@@ -1041,43 +1023,43 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
                 </div>
               </div>
             )}
-{/* 🌟 일반 탭 3: 계정 관리 및 일괄 자동 부여 (UI 대폭 개선 버전) */}
+
+            {/* 🌟 일반 탭 3: 계정 관리 및 일괄 자동 부여 (UI 대폭 개선 버전) */}
             {activeTab === 'admin_accounts' && user.type === 'admin' && (
-              <div className="bg-white p-8 rounded-3xl border shadow-sm">
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                  <h2 className="text-2xl font-bold text-gray-900 whitespace-nowrap">행사별 계정 관리</h2>
-                  <select value={accountManageEvent} onChange={e => { setAccountManageEvent(e.target.value); }} className="w-full sm:w-auto px-5 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-900/10">
-                    <option value="">-- 확인하실 행사(이벤트)를 선택하세요 --</option>
+              <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border shadow-sm">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3 sm:gap-4">
+                  <h2 className="text-lg sm:text-2xl font-bold text-gray-900 whitespace-nowrap">행사별 계정 관리</h2>
+                  <select value={accountManageEvent} onChange={e => { setAccountManageEvent(e.target.value); }} className="w-full sm:w-auto px-4 py-2.5 sm:px-5 sm:py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+                    <option value="">-- 확인하실 행사 선택 --</option>
                     {parsedEventsList.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
                   </select>
                 </div>
 
-                {/* 💡 [수정 완료] && 문법을 ? 삼항 연산자로 수정하여 화면 뻗는 현상 해결 */}
                 {accountManageEvent && accountList.eventData ? (
                   <>
                     {/* 🌟 행사 미팅 일자 및 시간표 세션 수 정보 */}
-                    <div className="mb-6 px-6 py-4 bg-indigo-50/50 border border-indigo-100 rounded-xl flex items-center justify-between gap-3">
+                    <div className="mb-6 px-4 py-3 sm:px-6 sm:py-4 bg-indigo-50/50 border border-indigo-100 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-indigo-500 text-2xl">📅</span>
+                        <span className="text-indigo-500 text-xl sm:text-2xl">📅</span>
                         <div>
-                          <p className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-0.5">행사 미팅 일자</p>
-                          <p className="text-sm font-bold text-gray-900">
+                          <p className="text-[10px] sm:text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-0.5">행사 미팅 일자</p>
+                          <p className="text-xs sm:text-sm font-bold text-gray-900">
                             {accountList.eventData.config?.dates ? accountList.eventData.config.dates.join(', ') : '일정 미정'}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">자동 연동 세션 수</p>
-                        <p className="text-sm font-bold text-indigo-600">{accountList.timeSlots.length}개 세션 적용됨</p>
+                      <div className="text-left sm:text-right">
+                        <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">자동 연동 세션 수</p>
+                        <p className="text-xs sm:text-sm font-bold text-indigo-600">{accountList.timeSlots.length}개 세션 적용됨</p>
                       </div>
                     </div>
 
                     {/* 🌟 국내기업 / 바이어 선택 필터 탭 */}
-                    <div className="flex bg-gray-100 p-1 rounded-xl max-w-xs mb-6">
-                      <button type="button" onClick={() => setAccountManageType('company')} className={`flex-1 text-center py-2 rounded-lg text-xs font-bold transition-all ${accountManageType === 'company' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                    <div className="flex bg-gray-100 p-1 rounded-xl w-full sm:max-w-xs mb-6">
+                      <button type="button" onClick={() => setAccountManageType('company')} className={`flex-1 text-center py-2.5 rounded-lg text-xs font-bold transition-all ${accountManageType === 'company' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
                         국내 기업 ({accountList.companies.length})
                       </button>
-                      <button type="button" onClick={() => setAccountManageType('buyer')} className={`flex-1 text-center py-2 rounded-lg text-xs font-bold transition-all ${accountManageType === 'buyer' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                      <button type="button" onClick={() => setAccountManageType('buyer')} className={`flex-1 text-center py-2.5 rounded-lg text-xs font-bold transition-all ${accountManageType === 'buyer' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
                         해외 바이어 ({accountList.buyers.length})
                       </button>
                     </div>
@@ -1085,49 +1067,49 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
                     {/* 국내 기업 선택시 노출 */}
                     {accountManageType === 'company' && (
                       <div className="fade-in">
-                        <div className="flex justify-between items-center mb-4 gap-4">
-                          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2 whitespace-nowrap">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 sm:gap-4">
+                          <h3 className="text-sm sm:text-base font-bold text-gray-900 flex items-center gap-2 whitespace-nowrap">
                             <span className="w-2 h-2 rounded-full bg-blue-500"></span> 국내 기업 목록
                           </h3>
-                          <button onClick={() => bulkCreateMissingAccounts('company')} disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition shadow-sm disabled:opacity-50 whitespace-nowrap">
+                          <button onClick={() => bulkCreateMissingAccounts('company')} disabled={loading} className="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition shadow-sm disabled:opacity-50 whitespace-nowrap">
                             {loading ? '생성 중...' : '미생성 기업 일괄 계정부여'}
                           </button>
                         </div>
-                        <div className="overflow-x-auto border border-gray-200 rounded-2xl shadow-sm">
-                          <table className="w-full text-sm text-left">
-                            <thead className="bg-gray-50 text-gray-500 font-bold text-[11px] uppercase tracking-wider border-b border-gray-200">
+                        <div className="overflow-x-auto border border-gray-200 rounded-xl sm:rounded-2xl shadow-sm">
+                          <table className="w-full text-xs sm:text-sm text-left">
+                            <thead className="bg-gray-50 text-gray-500 font-bold text-[10px] sm:text-[11px] uppercase tracking-wider border-b border-gray-200">
                               <tr>
-                                <th className="px-6 py-4 whitespace-nowrap">기업명</th>
-                                <th className="px-6 py-4 whitespace-nowrap w-40">아이디 (ID 지정)</th>
-                                <th className="px-6 py-4 whitespace-nowrap w-36">비밀번호 지정</th>
-                                <th className="px-6 py-4 text-center whitespace-nowrap w-28">상태 및 관리</th>
+                                <th className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">기업명</th>
+                                <th className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap w-32 sm:w-40">아이디 (ID 지정)</th>
+                                <th className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap w-24 sm:w-36">비밀번호 지정</th>
+                                <th className="px-4 py-3 sm:px-6 sm:py-4 text-center whitespace-nowrap w-28">상태 및 관리</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                               {accountList.companies.map(acc => (
                                 <tr key={acc.originalId} className="hover:bg-gray-50/50 transition">
-                                  <td className="px-6 py-3.5 font-bold text-gray-900 min-w-[240px] max-w-sm truncate" title={acc.displayName}>{acc.displayName}</td>
-                                  <td className="px-6 py-3.5 whitespace-nowrap">
+                                  <td className="px-4 py-2.5 sm:px-6 sm:py-3.5 font-bold text-gray-900 min-w-[150px] sm:min-w-[240px] max-w-[150px] sm:max-w-sm truncate" title={acc.displayName}>{acc.displayName}</td>
+                                  <td className="px-4 py-2.5 sm:px-6 sm:py-3.5 whitespace-nowrap">
                                     {acc.isRegistered ? 
-                                      <span className="text-gray-700 font-mono bg-gray-100 px-2.5 py-1 rounded border text-xs">{acc.registeredId}</span> : 
-                                      <input id={`id_${acc.originalId}`} defaultValue={acc.defaultGeneratedId} className="w-36 px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-mono" />
+                                      <span className="text-gray-700 font-mono bg-gray-100 px-2 py-1 sm:px-2.5 sm:py-1 rounded border text-[10px] sm:text-xs">{acc.registeredId}</span> : 
+                                      <input id={`id_${acc.originalId}`} defaultValue={acc.defaultGeneratedId} className="w-24 sm:w-36 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-[10px] sm:text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-mono" />
                                     }
                                   </td>
-                                  <td className="px-6 py-3.5 whitespace-nowrap">
+                                  <td className="px-4 py-2.5 sm:px-6 sm:py-3.5 whitespace-nowrap">
                                     {acc.isRegistered ? 
-                                      <span className="text-blue-600 font-bold font-mono">{acc.password}</span> : 
-                                      <input id={`pw_${acc.originalId}`} defaultValue="1234" className="w-24 px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-mono" />
+                                      <span className="text-blue-600 font-bold font-mono text-[10px] sm:text-xs">{acc.password}</span> : 
+                                      <input id={`pw_${acc.originalId}`} defaultValue="1234" className="w-16 sm:w-24 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-[10px] sm:text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-mono" />
                                     }
                                   </td>
-                                  <td className="px-6 py-3.5 text-center whitespace-nowrap">
+                                  <td className="px-4 py-2.5 sm:px-6 sm:py-3.5 text-center whitespace-nowrap">
                                     {acc.isRegistered ? 
-                                      <span className="inline-block px-2.5 py-1 bg-green-50 text-green-600 rounded-md text-[11px] font-bold border border-green-100">생성 완료</span> : 
-                                      <button onClick={() => quickCreateAccount(acc)} disabled={loading} className="px-3.5 py-1.5 bg-gray-900 text-white rounded-lg text-[11px] font-bold hover:bg-black transition shadow-sm">계정 부여</button>
+                                      <span className="inline-block px-2 py-1 sm:px-2.5 sm:py-1 bg-green-50 text-green-600 rounded-md text-[10px] sm:text-[11px] font-bold border border-green-100">생성 완료</span> : 
+                                      <button onClick={() => quickCreateAccount(acc)} disabled={loading} className="px-3 py-1 sm:px-3.5 sm:py-1.5 bg-gray-900 text-white rounded-lg text-[10px] sm:text-[11px] font-bold hover:bg-black transition shadow-sm">계정 부여</button>
                                     }
                                   </td>
                                 </tr>
                               ))}
-                              {accountList.companies.length === 0 && <tr><td colSpan="4" className="text-center py-10 text-gray-400 font-medium">등록된 기업 데이터가 없습니다.</td></tr>}
+                              {accountList.companies.length === 0 && <tr><td colSpan="4" className="text-center py-6 sm:py-10 text-gray-400 font-medium text-xs sm:text-sm">등록된 기업 데이터가 없습니다.</td></tr>}
                             </tbody>
                           </table>
                         </div>
@@ -1137,49 +1119,49 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
                     {/* 해외 바이어 선택시 노출 */}
                     {accountManageType === 'buyer' && (
                       <div className="fade-in">
-                        <div className="flex justify-between items-center mb-4 gap-4">
-                          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2 whitespace-nowrap">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 sm:gap-4">
+                          <h3 className="text-sm sm:text-base font-bold text-gray-900 flex items-center gap-2 whitespace-nowrap">
                             <span className="w-2 h-2 rounded-full bg-green-500"></span> 해외 바이어 목록
                           </h3>
-                          <button onClick={() => bulkCreateMissingAccounts('buyer')} disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition shadow-sm disabled:opacity-50 whitespace-nowrap">
+                          <button onClick={() => bulkCreateMissingAccounts('buyer')} disabled={loading} className="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition shadow-sm disabled:opacity-50 whitespace-nowrap">
                             {loading ? '생성 중...' : '미생성 바이어 일괄 계정부여'}
                           </button>
                         </div>
-                        <div className="overflow-x-auto border border-gray-200 rounded-2xl shadow-sm">
-                          <table className="w-full text-sm text-left">
-                            <thead className="bg-gray-50 text-gray-500 font-bold text-[11px] uppercase tracking-wider border-b border-gray-200">
+                        <div className="overflow-x-auto border border-gray-200 rounded-xl sm:rounded-2xl shadow-sm">
+                          <table className="w-full text-xs sm:text-sm text-left">
+                            <thead className="bg-gray-50 text-gray-500 font-bold text-[10px] sm:text-[11px] uppercase tracking-wider border-b border-gray-200">
                               <tr>
-                                <th className="px-6 py-4 whitespace-nowrap">바이어 기업명</th>
-                                <th className="px-6 py-4 whitespace-nowrap w-40">아이디 (ID 지정)</th>
-                                <th className="px-6 py-4 whitespace-nowrap w-36">비밀번호 지정</th>
-                                <th className="px-6 py-4 text-center whitespace-nowrap w-28">상태 및 관리</th>
+                                <th className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">바이어 기업명</th>
+                                <th className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap w-32 sm:w-40">아이디 (ID 지정)</th>
+                                <th className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap w-24 sm:w-36">비밀번호 지정</th>
+                                <th className="px-4 py-3 sm:px-6 sm:py-4 text-center whitespace-nowrap w-28">상태 및 관리</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                               {accountList.buyers.map(acc => (
                                 <tr key={acc.originalId} className="hover:bg-gray-50/50 transition">
-                                  <td className="px-6 py-3.5 font-bold text-gray-900 min-w-[240px] max-w-sm truncate" title={acc.displayName}>{acc.displayName}</td>
-                                  <td className="px-6 py-3.5 whitespace-nowrap">
+                                  <td className="px-4 py-2.5 sm:px-6 sm:py-3.5 font-bold text-gray-900 min-w-[150px] sm:min-w-[240px] max-w-[150px] sm:max-w-sm truncate" title={acc.displayName}>{acc.displayName}</td>
+                                  <td className="px-4 py-2.5 sm:px-6 sm:py-3.5 whitespace-nowrap">
                                     {acc.isRegistered ? 
-                                      <span className="text-gray-700 font-mono bg-gray-100 px-2.5 py-1 rounded border text-xs">{acc.registeredId}</span> : 
-                                      <input id={`id_${acc.originalId}`} defaultValue={acc.defaultGeneratedId} className="w-36 px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-mono" />
+                                      <span className="text-gray-700 font-mono bg-gray-100 px-2 py-1 sm:px-2.5 sm:py-1 rounded border text-[10px] sm:text-xs">{acc.registeredId}</span> : 
+                                      <input id={`id_${acc.originalId}`} defaultValue={acc.defaultGeneratedId} className="w-24 sm:w-36 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-[10px] sm:text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-mono" />
                                     }
                                   </td>
-                                  <td className="px-6 py-3.5 whitespace-nowrap">
+                                  <td className="px-4 py-2.5 sm:px-6 sm:py-3.5 whitespace-nowrap">
                                     {acc.isRegistered ? 
-                                      <span className="text-blue-600 font-bold font-mono">{acc.password}</span> : 
-                                      <input id={`pw_${acc.originalId}`} defaultValue="1234" className="w-24 px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-mono" />
+                                      <span className="text-blue-600 font-bold font-mono text-[10px] sm:text-xs">{acc.password}</span> : 
+                                      <input id={`pw_${acc.originalId}`} defaultValue="1234" className="w-16 sm:w-24 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-[10px] sm:text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-mono" />
                                     }
                                   </td>
-                                  <td className="px-6 py-3.5 text-center whitespace-nowrap">
+                                  <td className="px-4 py-2.5 sm:px-6 sm:py-3.5 text-center whitespace-nowrap">
                                     {acc.isRegistered ? 
-                                      <span className="inline-block px-2.5 py-1 bg-green-50 text-green-600 rounded-md text-[11px] font-bold border border-green-100">생성 완료</span> : 
-                                      <button onClick={() => quickCreateAccount(acc)} disabled={loading} className="px-3.5 py-1.5 bg-gray-900 text-white rounded-lg text-[11px] font-bold hover:bg-black transition shadow-sm">계정 부여</button>
+                                      <span className="inline-block px-2 py-1 sm:px-2.5 sm:py-1 bg-green-50 text-green-600 rounded-md text-[10px] sm:text-[11px] font-bold border border-green-100">생성 완료</span> : 
+                                      <button onClick={() => quickCreateAccount(acc)} disabled={loading} className="px-3 py-1 sm:px-3.5 sm:py-1.5 bg-gray-900 text-white rounded-lg text-[10px] sm:text-[11px] font-bold hover:bg-black transition shadow-sm">계정 부여</button>
                                     }
                                   </td>
                                 </tr>
                               ))}
-                              {accountList.buyers.length === 0 && <tr><td colSpan="4" className="text-center py-10 text-gray-400 font-medium">등록된 바이어 데이터가 없습니다.</td></tr>}
+                              {accountList.buyers.length === 0 && <tr><td colSpan="4" className="text-center py-6 sm:py-10 text-gray-400 font-medium text-xs sm:text-sm">등록된 바이어 데이터가 없습니다.</td></tr>}
                             </tbody>
                           </table>
                         </div>
@@ -1187,9 +1169,9 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
                     )}
                   </>
                 ) : (
-                  <div className="py-24 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
-                    <div className="text-4xl mb-4">🗂️</div>
-                    <p className="text-gray-500 font-medium">상단에서 행사를 선택하시면 해당 행사의 일정 정보와 함께 <strong>국내기업/바이어 분리 관리 창</strong>이 나타납니다.</p>
+                  <div className="py-16 sm:py-24 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                    <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">🗂️</div>
+                    <p className="text-gray-500 font-medium text-xs sm:text-sm px-4">상단에서 행사를 선택하시면 해당 행사의 일정 정보와 함께 <br className="hidden sm:block"/><strong>국내기업/바이어 분리 관리 창</strong>이 나타납니다.</p>
                   </div>
                 )}
               </div>
@@ -1199,26 +1181,26 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
           {/* 🌟 베이스데이터 기반 계정 생성 모달 */}
           {adminUserModal.isOpen && (
             <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in">
-              <form onSubmit={handleBaseAccountCreate} className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-100 relative">
-                <h3 className="font-bold text-xl text-gray-900 mb-6">행사 기반 계정 생성</h3>
-                <div className="space-y-4 mb-8">
+              <form onSubmit={handleBaseAccountCreate} className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl border border-gray-100 relative">
+                <h3 className="font-bold text-lg sm:text-xl text-gray-900 mb-5 sm:mb-6">행사 기반 계정 생성</h3>
+                <div className="space-y-4 mb-6 sm:mb-8">
                   <div>
                     <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2">행사 (이벤트) 선택</label>
-                    <select required value={adminUserModal.selectedEvent} onChange={e=>setAdminUserModal({...adminUserModal, selectedEvent: e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all">
+                    <select required value={adminUserModal.selectedEvent} onChange={e=>setAdminUserModal({...adminUserModal, selectedEvent: e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all">
                       <option value="">-- 행사 선택 --</option>
                       {parsedEventsList.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2">계정 유형</label>
-                    <select value={adminUserModal.userType} onChange={e=>setAdminUserModal({...adminUserModal, userType: e.target.value, selectedAccountId: ''})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all">
+                    <select value={adminUserModal.userType} onChange={e=>setAdminUserModal({...adminUserModal, userType: e.target.value, selectedAccountId: ''})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all">
                       <option value="company">국내 기업</option>
                       <option value="buyer">해외 바이어</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2">대상 기업/바이어 선택</label>
-                    <select required value={adminUserModal.selectedAccountId} onChange={e=>setAdminUserModal({...adminUserModal, selectedAccountId: e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all">
+                    <select required value={adminUserModal.selectedAccountId} onChange={e=>setAdminUserModal({...adminUserModal, selectedAccountId: e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all">
                       <option value="">-- 대상 선택 --</option>
                       {filteredBaseAccounts.map(acc => (
                         <option key={acc.id || acc.companyName || acc.name} value={acc.id || acc.companyName || acc.name}>
@@ -1230,16 +1212,16 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2">접속용 아이디(ID)</label>
-                    <input required value={adminUserModal.userId} onChange={e=>setAdminUserModal({...adminUserModal, userId: e.target.value})} placeholder="로그인에 사용할 아이디 입력" className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all" />
+                    <input required value={adminUserModal.userId} onChange={e=>setAdminUserModal({...adminUserModal, userId: e.target.value})} placeholder="로그인에 사용할 아이디 입력" className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all" />
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2">초기 비밀번호</label>
-                    <input required value={adminUserModal.password} onChange={e=>setAdminUserModal({...adminUserModal, password: e.target.value})} placeholder="비밀번호 입력" className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all" />
+                    <input required value={adminUserModal.password} onChange={e=>setAdminUserModal({...adminUserModal, password: e.target.value})} placeholder="비밀번호 입력" className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-all" />
                   </div>
                 </div>
-                <div className="flex gap-3 justify-end">
-                  <button type="button" onClick={()=>setAdminUserModal({...adminUserModal, isOpen:false})} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">취소</button>
-                  <button type="submit" disabled={loading || !adminUserModal.selectedAccountId} className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors">{loading ? '생성 중...' : '계정 생성 완료'}</button>
+                <div className="flex gap-2 sm:gap-3 justify-end">
+                  <button type="button" onClick={()=>setAdminUserModal({...adminUserModal, isOpen:false})} className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors w-full sm:w-auto">취소</button>
+                  <button type="submit" disabled={loading || !adminUserModal.selectedAccountId} className="px-4 py-2 sm:px-6 sm:py-2.5 bg-indigo-600 text-white rounded-xl text-xs sm:text-sm font-medium hover:bg-indigo-700 transition-colors w-full sm:w-auto">{loading ? '생성 중...' : '계정 생성 완료'}</button>
                 </div>
               </form>
             </div>
@@ -1248,27 +1230,27 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
           {/* 기업 상세, 미팅 신청, 승인 모달, 메시지 조회 (원본 디자인 유지) */}
           {detailModal.isOpen && detailModal.profile && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in" onClick={()=>setDetailModal({isOpen:false})}>
-              <div className="bg-white rounded-3xl p-8 w-full max-w-2xl shadow-2xl border border-gray-100 relative max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
-                <button onClick={() => setDetailModal({isOpen: false, profile: null})} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-                <div className="mb-8 pr-8">
-                  <span className="px-2.5 py-1 bg-gray-50 text-gray-600 rounded-md text-[11px] font-bold tracking-wide uppercase border border-gray-100 inline-block mb-4">{detailModal.profile.profileData.country || 'Unknown'}</span>
-                  <h3 className="font-bold text-2xl text-gray-900 mb-2">{detailModal.profile.profileData.name || 'Untitled Company'}</h3>
-                  <p className="text-sm font-medium text-gray-400">{detailModal.profile.userId}</p>
+              <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-2xl shadow-2xl border border-gray-100 relative max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+                <button onClick={() => setDetailModal({isOpen: false, profile: null})} className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"><svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                <div className="mb-6 sm:mb-8 pr-6 sm:pr-8">
+                  <span className="px-2 py-1 sm:px-2.5 sm:py-1 bg-gray-50 text-gray-600 rounded-md text-[10px] sm:text-[11px] font-bold tracking-wide uppercase border border-gray-100 inline-block mb-3 sm:mb-4">{detailModal.profile.profileData.country || 'Unknown'}</span>
+                  <h3 className="font-bold text-xl sm:text-2xl text-gray-900 mb-2">{detailModal.profile.profileData.name || 'Untitled Company'}</h3>
+                  <p className="text-xs sm:text-sm font-medium text-gray-400">{detailModal.profile.userId}</p>
                 </div>
-                <div className="space-y-8">
+                <div className="space-y-6 sm:space-y-8">
                   <div>
-                    <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-3">{t.aboutCompany}</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50/50 p-5 rounded-2xl border border-gray-100">{detailModal.profile.profileData.intro || '-'}</p>
+                    <h4 className="text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">{t.aboutCompany}</h4>
+                    <p className="text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50/50 p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-100">{detailModal.profile.profileData.intro || '-'}</p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-2">
-                    <div><h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.manager}</h4><p className="text-sm font-medium text-gray-900">{detailModal.profile.profileData.manager || '-'}</p></div>
-                    <div><h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.productsInterests}</h4><p className="text-sm font-medium text-gray-900">{detailModal.profile.profileData.products || '-'}</p></div>
-                    <div className="sm:col-span-2"><h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.websiteUrl}</h4>{detailModal.profile.profileData.website ? (<a href={detailModal.profile.profileData.website?.startsWith('http') ? detailModal.profile.profileData.website : `https://${detailModal.profile.profileData.website}`} target="_blank" className="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors">{detailModal.profile.profileData.website}</a>) : '-'}</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-8 pt-2">
+                    <div><h4 className="text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1 sm:mb-2">{t.manager}</h4><p className="text-xs sm:text-sm font-medium text-gray-900">{detailModal.profile.profileData.manager || '-'}</p></div>
+                    <div><h4 className="text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1 sm:mb-2">{t.productsInterests}</h4><p className="text-xs sm:text-sm font-medium text-gray-900">{detailModal.profile.profileData.products || '-'}</p></div>
+                    <div className="sm:col-span-2"><h4 className="text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1 sm:mb-2">{t.websiteUrl}</h4>{detailModal.profile.profileData.website ? (<a href={detailModal.profile.profileData.website?.startsWith('http') ? detailModal.profile.profileData.website : `https://${detailModal.profile.profileData.website}`} target="_blank" className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors">{detailModal.profile.profileData.website}</a>) : '-'}</div>
                   </div>
                 </div>
-                <div className="mt-10 pt-6 border-t border-gray-100 flex justify-end gap-3">
-                  <button onClick={() => setDetailModal({isOpen: false, profile: null})} className="px-6 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors">{t.close}</button>
-                  <button onClick={() => { const p = detailModal.profile; setDetailModal({isOpen: false, profile: null}); setApplyModal({ isOpen: true, targetId: p.userId, targetName: p.profileData.name || p.userId }); }} className="px-8 py-3 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">{t.requestMeeting}</button>
+                <div className="mt-8 sm:mt-10 pt-5 sm:pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+                  <button onClick={() => setDetailModal({isOpen: false, profile: null})} className="w-full sm:w-auto px-6 py-3 rounded-xl text-xs sm:text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors bg-gray-50 sm:bg-transparent">{t.close}</button>
+                  <button onClick={() => { const p = detailModal.profile; setDetailModal({isOpen: false, profile: null}); setApplyModal({ isOpen: true, targetId: p.userId, targetName: p.profileData.name || p.userId }); }} className="w-full sm:w-auto px-8 py-3 bg-gray-900 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">{t.requestMeeting}</button>
                 </div>
               </div>
             </div>
@@ -1276,34 +1258,34 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
 
           {applyModal.isOpen && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in">
-              <form onSubmit={handleApplyMeeting} className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-100 relative">
-                <h3 className="font-bold text-xl text-gray-900 mb-6">{t.requestMeeting} <br/> <span className="text-gray-400 text-sm font-medium mt-1 block">{t.with} {applyModal.targetName}</span></h3>
-                <div className="mb-5"><label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.selectTime}</label>
-                  <select name="time" required className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all">
+              <form onSubmit={handleApplyMeeting} className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl border border-gray-100 relative">
+                <h3 className="font-bold text-lg sm:text-xl text-gray-900 mb-5 sm:mb-6">{t.requestMeeting} <br/> <span className="text-gray-400 text-xs sm:text-sm font-medium mt-1 block">{t.with} {applyModal.targetName}</span></h3>
+                <div className="mb-4 sm:mb-5"><label className="block text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.selectTime}</label>
+                  <select name="time" required className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all">
                     <option value="">{t.chooseSlot}</option>{eventInfo.timeSlots?.map(time => <option key={time} value={time}>{time}</option>)}
                   </select>
                 </div>
-                <div className="mb-8"><label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.messageOptional}</label><textarea name="message" className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm h-24 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all resize-none" placeholder={t.addBriefNote}></textarea></div>
-                <div className="flex gap-3 justify-end"><button type="button" onClick={() => setApplyModal({isOpen:false})} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">{t.cancel}</button><button type="submit" disabled={loading} className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-black transition-colors">{loading ? t.sending : t.sendRequest}</button></div>
+                <div className="mb-6 sm:mb-8"><label className="block text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.messageOptional}</label><textarea name="message" className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm h-20 sm:h-24 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all resize-none" placeholder={t.addBriefNote}></textarea></div>
+                <div className="flex gap-2 sm:gap-3 justify-end"><button type="button" onClick={() => setApplyModal({isOpen:false})} className="w-full sm:w-auto px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors bg-gray-50 sm:bg-transparent">{t.cancel}</button><button type="submit" disabled={loading} className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-2.5 bg-gray-900 text-white rounded-xl text-xs sm:text-sm font-medium hover:bg-black transition-colors">{loading ? t.sending : t.sendRequest}</button></div>
               </form>
             </div>
           )}
 
           {replyModal.isOpen && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in">
-              <form onSubmit={handleReplyMeeting} className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-100 relative">
-                <h3 className="font-bold text-xl text-gray-900 mb-2">{replyModal.type === 'approve' ? t.acceptRequest : replyModal.type === 'reschedule' ? t.reschedule : t.declineRequest}</h3>
-                <p className="text-sm text-gray-500 mb-6 border-b border-gray-100 pb-6">{replyModal.type === 'approve' ? t.acceptModalDesc : replyModal.type === 'reschedule' ? t.proposeNewTime : t.declineModalDesc}</p>
+              <form onSubmit={handleReplyMeeting} className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl border border-gray-100 relative">
+                <h3 className="font-bold text-lg sm:text-xl text-gray-900 mb-2">{replyModal.type === 'approve' ? t.acceptRequest : replyModal.type === 'reschedule' ? t.reschedule : t.declineRequest}</h3>
+                <p className="text-xs sm:text-sm text-gray-500 mb-5 sm:mb-6 border-b border-gray-100 pb-5 sm:pb-6">{replyModal.type === 'approve' ? t.acceptModalDesc : replyModal.type === 'reschedule' ? t.proposeNewTime : t.declineModalDesc}</p>
                 {replyModal.type === 'reschedule' && (
-                  <div className="mb-8 space-y-5">
-                    <div><label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.proposedTime}</label><select name="newTime" required className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"><option value="">{t.chooseSlot}</option>{eventInfo.timeSlots?.map(time => <option key={time} value={time}>{time}</option>)}</select></div>
-                    <div><label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.noteToSender}</label><input type="text" name="replyMessage" required placeholder={lang === 'ko' ? "예시: 이 시간은 어떠신가요?" : "Ex: Are you available at this time?"} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" /></div>
+                  <div className="mb-6 sm:mb-8 space-y-4 sm:space-y-5">
+                    <div><label className="block text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.proposedTime}</label><select name="newTime" required className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"><option value="">{t.chooseSlot}</option>{eventInfo.timeSlots?.map(time => <option key={time} value={time}>{time}</option>)}</select></div>
+                    <div><label className="block text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.noteToSender}</label><input type="text" name="replyMessage" required placeholder={lang === 'ko' ? "예시: 이 시간은 어떠신가요?" : "Ex: Are you available at this time?"} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" /></div>
                   </div>
                 )}
                 {replyModal.type === 'reject' && (
-                  <div className="mb-8"><label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.reasonOptional}</label><input type="text" name="replyMessage" placeholder={t.typeBriefReason} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" /></div>
+                  <div className="mb-6 sm:mb-8"><label className="block text-[11px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.reasonOptional}</label><input type="text" name="replyMessage" placeholder={t.typeBriefReason} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" /></div>
                 )}
-                <div className="flex gap-3 justify-end"><button type="button" onClick={() => setReplyModal({isOpen:false})} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">{t.cancel}</button><button type="submit" disabled={loading} className={`px-6 py-2.5 text-white rounded-xl text-sm font-medium transition-colors ${replyModal.type === 'approve' ? 'bg-blue-600 hover:bg-blue-700' : replyModal.type === 'reschedule' ? 'bg-gray-800 hover:bg-gray-900' : 'bg-red-600 hover:bg-red-700'}`}>{t.confirm}</button></div>
+                <div className="flex gap-2 sm:gap-3 justify-end"><button type="button" onClick={() => setReplyModal({isOpen:false})} className="w-full sm:w-auto px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors bg-gray-50 sm:bg-transparent">{t.cancel}</button><button type="submit" disabled={loading} className={`w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-2.5 text-white rounded-xl text-xs sm:text-sm font-medium transition-colors ${replyModal.type === 'approve' ? 'bg-blue-600 hover:bg-blue-700' : replyModal.type === 'reschedule' ? 'bg-gray-800 hover:bg-gray-900' : 'bg-red-600 hover:bg-red-700'}`}>{t.confirm}</button></div>
               </form>
             </div>
           )}
@@ -1311,13 +1293,13 @@ const [dashboardEvent, setDashboardEvent] = useState(''); // 전체 미팅 관�
           {/* 메시지 전체 보기 모달 */}
           {msgModal.isOpen && (
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in" onClick={() => setMsgModal({ isOpen: false, text: '' })}>
-               <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-100 relative" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-4">
-                  <h3 className="font-bold text-lg text-gray-900">메시지 상세 내용</h3>
-                  <button onClick={() => setMsgModal({ isOpen: false, text: '' })} className="text-gray-400 hover:text-gray-900 transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+               <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl border border-gray-100 relative" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-3 sm:pb-4">
+                  <h3 className="font-bold text-base sm:text-lg text-gray-900">메시지 상세 내용</h3>
+                  <button onClick={() => setMsgModal({ isOpen: false, text: '' })} className="text-gray-400 hover:text-gray-900 transition-colors p-1"><svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
                 </div>
-                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 p-5 rounded-2xl border border-gray-100 min-h-[100px] max-h-[60vh] overflow-y-auto">{msgModal.text}</p>
-                <div className="mt-6 flex justify-end"><button onClick={() => setMsgModal({ isOpen: false, text: '' })} className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-black transition-colors">닫기</button></div>
+                <p className="text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-100 min-h-[80px] sm:min-h-[100px] max-h-[50vh] sm:max-h-[60vh] overflow-y-auto">{msgModal.text}</p>
+                <div className="mt-5 sm:mt-6 flex justify-end"><button onClick={() => setMsgModal({ isOpen: false, text: '' })} className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-2.5 bg-gray-900 text-white rounded-xl text-xs sm:text-sm font-medium hover:bg-black transition-colors">닫기</button></div>
               </div>
             </div>
           )}
