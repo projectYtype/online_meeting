@@ -1,9 +1,9 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
+<!DOCTYPE html><html lang="ko"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>B2B 온라인 미팅 참가자 라운지</title>
+  <title>B2B Connect | Business Lounge</title>
+  
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -11,76 +11,288 @@
   <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
   
   <style>
-    .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-  </style>
-</head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+    body { 
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      background-color: #FAFAFA;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+    
+    .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style></head><body class="text-gray-900 selection:bg-gray-900 selection:text-white">
   <div id="root"></div>
 
   <script type="text/babel" data-presets="react">
     const { useState, useEffect } = React;
 
-    // 🌟 여기에 2단계에서 만든 구글 Apps Script 웹 앱 URL을 넣으세요!
-    const ONLINE_GAS_URL = 'https://script.google.com/macros/s/AKfycbzQH8Gwwv28mQRUlZq4NCKVDlv51EbtNCSOBp8xVnrQKXmvzDX_OzDz2x_QHrXFkAWY/exec';
+    const ONLINE_GAS_URL = 'https://script.google.com/macros/s/AKfycbzSQVxSiGK3fGJSJ1yarOxYUy2zVi2sbwvq5OyfGfx1fYqOQutHJedX4WP_tBSGxXvR/exec';
 
-    // 임시 세션 시간표 (관리자 설정에 맞춰 수정 가능)
-    const TIME_SLOTS = [
-      "09:00~09:30", "09:30~10:00", "10:00~10:30", "10:30~11:00", 
-      "13:00~13:30", "13:30~14:00", "14:00~14:30", "14:30~15:00"
-    ];
+    const DICTIONARY = {
+      ko: {
+        signInTitle: "대시보드 로그인",
+        domestic: "국내 기업",
+        buyer: "해외 바이어",
+        userId: "사용자 ID",
+        password: "비밀번호",
+        idPlaceholder: "아이디를 입력하세요",
+        pwPlaceholder: "비밀번호를 입력하세요",
+        continue: "계속하기",
+        workspace: "워크스페이스",
+        signOut: "로그아웃",
+        participants: "참가 기업",
+        schedule: "미팅 일정",
+        settings: "프로필 설정",
+        noPartners: "등록된 파트너가 없습니다.",
+        manager: "담당자",
+        website: "웹사이트",
+        requestMeeting: "미팅 신청",
+        receivedRequests: "받은 신청 목록",
+        receivedDesc: "내가 받은 미팅 제안 목록입니다.",
+        sentRequests: "보낸 신청 목록",
+        sentDesc: "내가 보낸 미팅 신청 내역입니다.",
+        thRequester: "신청자",
+        thRecipient: "수신자",
+        thTime: "시간대",
+        thMessage: "메시지",
+        thStatus: "상태",
+        thAction: "관리",
+        thLink: "링크",
+        noRequests: "받은 신청이 없습니다.",
+        noSentRequests: "보낸 신청이 없습니다.",
+        accept: "승인",
+        reschedule: "일정 조정",
+        decline: "거절",
+        waitingLink: "링크 대기 중",
+        companyProfile: "기업 프로필",
+        profileDesc: "상대방에게 보여질 기본 정보를 설정합니다.",
+        companyName: "기업명",
+        countryRegion: "국가 / 지역",
+        contactPerson: "담당자명 (직함)",
+        aboutCompany: "기업 소개",
+        productsInterests: "주요 제품 / 관심 분야",
+        websiteUrl: "웹사이트 URL",
+        saveChanges: "변경사항 저장",
+        saving: "저장 중...",
+        with: "대상:",
+        selectTime: "시간 선택",
+        chooseSlot: "시간대를 선택하세요",
+        messageOptional: "메시지 (선택사항)",
+        addBriefNote: "간단한 메시지를 입력하세요...",
+        cancel: "취소",
+        close: "닫기",
+        sendRequest: "신청서 보내기",
+        sending: "전송 중...",
+        acceptRequest: "신청 승인",
+        acceptModalDesc: "이 미팅을 승인하시겠습니까? 승인 후 화상회의 링크가 발급됩니다.",
+        proposeNewTime: "새로운 시간을 제안해주세요.",
+        proposedTime: "제안 시간",
+        noteToSender: "전달 메시지",
+        declineRequest: "신청 거절",
+        declineModalDesc: "거절 사유를 간단히 남겨주세요.",
+        reasonOptional: "거절 사유 (선택사항)",
+        typeBriefReason: "거절 사유를 적어주세요...",
+        confirm: "확인",
+        alertLoginInput: "아이디와 비밀번호를 입력해주세요.",
+        alertWrongPw: "비밀번호가 일치하지 않습니다.",
+        alertNoData: "등록된 정보가 없습니다. 관리자에게 문의하세요.",
+        alertSaved: "프로필이 저장되었습니다.",
+        alertSaveError: "저장 중 오류가 발생했습니다.",
+        alertDuplicateTime: "해당 시간에 이미 일정이 있습니다.",
+        alertError: "오류 발생!",
+        companyTag: "국내 기업",
+        buyerTag: "해외 바이어",
+        unnamedEvent: "진행 중인 행사"
+      },
+      en: {
+        signInTitle: "Sign in to your dashboard",
+        domestic: "Domestic Company",
+        buyer: "Overseas Buyer",
+        userId: "User ID",
+        password: "Password",
+        idPlaceholder: "Enter your ID",
+        pwPlaceholder: "Enter your password",
+        continue: "Continue",
+        workspace: "Workspace",
+        signOut: "Sign out",
+        participants: "Participants",
+        schedule: "Schedule",
+        settings: "Settings",
+        noPartners: "No registered partners found.",
+        manager: "Manager",
+        website: "Website",
+        requestMeeting: "Request Meeting",
+        receivedRequests: "Received Requests",
+        receivedDesc: "List of meeting proposals received by me.",
+        sentRequests: "Sent Requests",
+        sentDesc: "History of meeting requests sent by me.",
+        thRequester: "Requester",
+        thRecipient: "Recipient",
+        thTime: "Time Slot",
+        thMessage: "Message",
+        thStatus: "Status",
+        thAction: "Action",
+        thLink: "Link",
+        noRequests: "No requests found.",
+        noSentRequests: "No sent requests.",
+        accept: "Accept",
+        reschedule: "Reschedule",
+        decline: "Decline",
+        waitingLink: "Waiting for link",
+        companyProfile: "Company Profile",
+        profileDesc: "Set up the basic information to be shown to the other party.",
+        companyName: "Company Name",
+        countryRegion: "Country / Region",
+        contactPerson: "Contact Person (Title)",
+        aboutCompany: "About Company",
+        productsInterests: "Products / Interests",
+        websiteUrl: "Website URL",
+        saveChanges: "Save Changes",
+        saving: "Saving...",
+        with: "with",
+        selectTime: "Select Time",
+        chooseSlot: "Choose a time slot",
+        messageOptional: "Message (Optional)",
+        addBriefNote: "Add a brief note...",
+        cancel: "Cancel",
+        close: "Close",
+        sendRequest: "Send Request",
+        sending: "Sending...",
+        acceptRequest: "Accept Request",
+        acceptModalDesc: "Would you like to approve this meeting? A video conference link will be issued upon approval.",
+        proposeNewTime: "Please propose a new time.",
+        proposedTime: "Proposed Time",
+        noteToSender: "Note to Sender",
+        declineRequest: "Decline Request",
+        declineModalDesc: "Please leave a brief reason for declining.",
+        reasonOptional: "Reason (Optional)",
+        typeBriefReason: "Type a brief reason...",
+        confirm: "Confirm",
+        alertLoginInput: "Please enter your ID and password.",
+        alertWrongPw: "Password does not match.",
+        alertNoData: "No registered information found. Please contact the administrator.",
+        alertSaved: "Profile saved successfully.",
+        alertSaveError: "An error occurred while saving.",
+        alertDuplicateTime: "You already have a schedule at this time.",
+        alertError: "An error occurred!",
+        companyTag: "Company",
+        buyerTag: "Buyer",
+        unnamedEvent: "Current Event"
+      }
+    };
+
+    // 타임슬롯 데이터를 배열로 변환
+    const parseTimeSlots = (slots) => {
+      if (Array.isArray(slots)) return slots;
+      if (typeof slots === 'string') {
+        return slots.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      return ["09:00~10:00", "10:00~11:00", "13:00~14:00", "14:00~15:00"]; // 만약을 위한 기본값
+    };
 
     function App() {
-      const [user, setUser] = useState(null);
-      const [activeTab, setActiveTab] = useState('partners'); // partners, schedule, profile
+      const [lang, setLang] = useState(() => localStorage.getItem('b2b_meeting_lang') || 'ko');
+      const [user, setUser] = useState(() => {
+        const saved = localStorage.getItem('b2b_meeting_user');
+        return saved ? JSON.parse(saved) : null;
+      });
       
+      const [activeTab, setActiveTab] = useState('schedule'); 
       const [profiles, setProfiles] = useState([]);
       const [meetings, setMeetings] = useState([]);
+      
+      // 사용자 계정에 종속된 행사 정보
+      const [eventInfo, setEventInfo] = useState(() => {
+        const saved = localStorage.getItem('b2b_event_info');
+        return saved ? JSON.parse(saved) : { name: '', timeSlots: [] };
+      });
       const [loading, setLoading] = useState(false);
 
-      // 모달 상태
       const [applyModal, setApplyModal] = useState({ isOpen: false, targetId: '', targetName: '' });
       const [replyModal, setReplyModal] = useState({ isOpen: false, meetingId: '', type: '' });
+      const [detailModal, setDetailModal] = useState({ isOpen: false, profile: null });
 
-      // 로그인/프로필 폼
       const [loginForm, setLoginForm] = useState({ id: '', pw: '', type: 'company' });
       const [myProfile, setMyProfile] = useState({ name: '', country: '', manager: '', intro: '', products: '', website: '' });
 
-      // --- 데이터 불러오기 ---
+      const handleLangChange = (newLang) => {
+        setLang(newLang);
+        localStorage.setItem('b2b_meeting_lang', newLang);
+      };
+
+      const t = DICTIONARY[lang];
+
       const fetchData = async () => {
         try {
           const res = await fetch(ONLINE_GAS_URL);
           const data = await res.json();
           setProfiles(data.profiles || []);
           setMeetings(data.meetings || []);
+          
+          if (user) {
+            // 유저 데이터를 찾고, 그 유저의 소속 행사명과 타임슬롯을 동기화
+            const me = (data.profiles || []).find(p => p.userId === user.id && p.userType === user.type);
+            if (me) {
+              setMyProfile(me.profileData);
+              const userEventName = me.eventName || me.profileData?.eventName || t.unnamedEvent;
+              const userTimeSlots = parseTimeSlots(me.timeSlots || me.profileData?.timeSlots);
+              
+              const newEventInfo = { name: userEventName, timeSlots: userTimeSlots };
+              setEventInfo(newEventInfo);
+              localStorage.setItem('b2b_event_info', JSON.stringify(newEventInfo));
+            }
+          }
         } catch (error) {
-          console.error("데이터 로드 실패:", error);
+          console.error("Data load failed:", error);
         }
       };
 
-      useEffect(() => { fetchData(); }, []);
+      useEffect(() => { fetchData(); }, [user]);
 
-// --- 로그인 (비밀번호 검증 강화) ---
       const handleLogin = (e) => {
         e.preventDefault();
-        if(!loginForm.id || !loginForm.pw) return alert('아이디와 비밀번호를 입력해주세요.');
+        if(!loginForm.id || !loginForm.pw) return alert(t.alertLoginInput);
         
-        // 구글 시트 프로필 풀에서 관리자가 발급해준 ID가 있는지 찾기
         const existingProfile = profiles.find(p => p.userId === loginForm.id && p.userType === loginForm.type);
         
         if (existingProfile) {
-          // 🚨 관리자가 모달에서 할당해준 패스워드와 사용자가 입력한 비밀번호 엄격 대조 검증
           if (existingProfile.profileData.password !== loginForm.pw) {
-            return alert('비밀번호가 일치하지 않습니다. 다시 입력해 주세요.');
+            return alert(t.alertWrongPw);
           }
+          
+          // 로그인 성공 즉시 "로그인한 유저"의 행사 정보를 가져와 세팅합니다.
+          const userEventName = existingProfile.eventName || existingProfile.profileData?.eventName || t.unnamedEvent;
+          const userTimeSlots = parseTimeSlots(existingProfile.timeSlots || existingProfile.profileData?.timeSlots);
+          
+          const newEventInfo = { name: userEventName, timeSlots: userTimeSlots };
+          setEventInfo(newEventInfo);
+          localStorage.setItem('b2b_event_info', JSON.stringify(newEventInfo));
+          
+          const loggedInUser = { id: loginForm.id, type: loginForm.type };
           setMyProfile(existingProfile.profileData);
-          setUser({ id: loginForm.id, type: loginForm.type });
+          setUser(loggedInUser);
+          localStorage.setItem('b2b_meeting_user', JSON.stringify(loggedInUser));
         } else {
-          alert('등록되지 않은 온라인 계정이거나 권한 분류(국내기업/해외바이어) 선택이 잘못되었습니다. 관리자에게 문의하세요.');
+          alert(t.alertNoData);
         }
       };
 
-      // --- 프로필 저장 ---
+      const handleLogout = () => {
+        localStorage.removeItem('b2b_meeting_user');
+        localStorage.removeItem('b2b_event_info');
+        setUser(null);
+        setLoginForm({ ...loginForm, id: '', pw: '' });
+        setEventInfo({ name: '', timeSlots: [] });
+      };
+
       const saveProfile = async () => {
         setLoading(true);
         try {
@@ -91,25 +303,23 @@
               data: { userId: user.id, userType: user.type, profileData: myProfile }
             })
           });
-          alert('프로필이 저장되었습니다.');
+          alert(t.alertSaved);
           fetchData();
         } catch (e) {
-          alert('저장 중 오류가 발생했습니다.');
+          alert(t.alertSaveError);
         }
         setLoading(false);
       };
 
-      // --- 미팅 신청 ---
       const handleApplyMeeting = async (e) => {
         e.preventDefault();
         const time = e.target.time.value;
         const msg = e.target.message.value;
 
-        // 중복 신청 체크
         const isDuplicate = meetings.some(m => 
           (m.requesterId === user.id || m.receiverId === user.id) && m.sessionTime === time && m.status !== '일정상 진행 불가'
         );
-        if (isDuplicate) return alert('해당 시간에는 이미 다른 미팅이 예정되어 있거나 신청 대기 중입니다.');
+        if (isDuplicate) return alert(t.alertDuplicateTime);
 
         setLoading(true);
         try {
@@ -123,15 +333,13 @@
               }
             })
           });
-          alert('미팅이 신청되었습니다.');
           setApplyModal({ isOpen: false });
           fetchData();
           setActiveTab('schedule');
-        } catch (err) { alert('오류 발생!'); }
+        } catch (err) { alert(t.alertError); }
         setLoading(false);
       };
 
-      // --- 미팅 응답 (승인/조정/거절) ---
       const handleReplyMeeting = async (e) => {
         e.preventDefault();
         const { meetingId, type } = replyModal;
@@ -141,7 +349,7 @@
         if (type === 'approve') status = '승인 완료';
         if (type === 'reschedule') {
           status = '일정 조정 요청';
-          msg = `[변경 희망: ${e.target.newTime.value}] ` + e.target.replyMessage.value;
+          msg = `[희망시간: ${e.target.newTime.value}] ` + e.target.replyMessage.value;
         }
         if (type === 'reject') {
           status = '일정상 진행 불가';
@@ -157,219 +365,470 @@
               data: { id: meetingId, status, message: msg }
             })
           });
-          alert('정상적으로 처리되었습니다.');
           setReplyModal({ isOpen: false });
           fetchData();
-        } catch (err) { alert('오류 발생!'); }
+        } catch (err) { alert(t.alertError); }
         setLoading(false);
       };
 
-      // --- 랜더링 ---
+      // 상태(Status) 값 다국어 및 색상 완벽 대응
+      const getStatusBadge = (status) => {
+        let label = status;
+        let style = "bg-gray-100 text-gray-800 border border-gray-200"; // 기본
+
+        if (status === '승인 완료') {
+          label = lang === 'ko' ? '승인 완료' : 'Approved';
+          style = "bg-blue-50 text-blue-600 border border-blue-100";
+        } else if (status === '검토 중') {
+          label = lang === 'ko' ? '검토 중' : 'Pending';
+          style = "bg-gray-100 text-gray-600 border border-gray-200";
+        } else if (status === '일정상 진행 불가') {
+          label = lang === 'ko' ? '거절됨' : 'Declined';
+          style = "bg-red-50 text-red-600 border border-red-100";
+        } else if (status === '일정 조정 요청') {
+          label = lang === 'ko' ? '조정 요청' : 'Reschedule';
+          style = "bg-orange-50 text-orange-600 border border-orange-100";
+        }
+
+        return <span className={`inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase ${style}`}>{label}</span>;
+      };
+
+      const LanguageToggle = () => (
+        <div className="inline-flex bg-gray-100 p-0.5 rounded-lg text-[11px] font-bold tracking-wide">
+          <button type="button" onClick={() => handleLangChange('ko')} className={`px-2.5 py-1 rounded-md transition-all ${lang === 'ko' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>KO</button>
+          <button type="button" onClick={() => handleLangChange('en')} className={`px-2.5 py-1 rounded-md transition-all ${lang === 'en' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>EN</button>
+        </div>
+      );
+
       if (!user) {
         return (
-          <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-              <h1 className="text-2xl font-bold text-center mb-6 text-blue-900">온라인 미팅 라운지 로그인</h1>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="flex gap-4 mb-4">
-                  <label className="flex items-center"><input type="radio" checked={loginForm.type === 'company'} onChange={()=>setLoginForm({...loginForm, type: 'company'})} className="mr-2"/> 국내 기업</label>
-                  <label className="flex items-center"><input type="radio" checked={loginForm.type === 'buyer'} onChange={()=>setLoginForm({...loginForm, type: 'buyer'})} className="mr-2"/> 해외 바이어</label>
-                </div>
-                <input type="text" placeholder="아이디" value={loginForm.id} onChange={e=>setLoginForm({...loginForm, id:e.target.value})} className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input type="password" placeholder="비밀번호" value={loginForm.pw} onChange={e=>setLoginForm({...loginForm, pw:e.target.value})} className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <button type="submit" className="w-full bg-blue-600 text-white font-bold p-3 rounded-lg hover:bg-blue-700">입장하기</button>
-              </form>
+          <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
+            <div className="absolute top-6 right-6">
+              <LanguageToggle />
+            </div>
+            <div className="w-full max-w-sm fade-in">
+              <div className="text-center mb-10">
+                <div className="w-12 h-12 bg-gray-900 text-white rounded-2xl flex items-center justify-center text-xl font-bold mx-auto mb-6 shadow-xl">B.</div>
+                <h1 className="text-2xl font-semibold tracking-tight text-gray-900 mb-2">B2B Connect</h1>
+                <p className="text-sm text-gray-500">{t.signInTitle}</p>
+              </div>
+              <div className="bg-white p-8 rounded-3xl border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <div className="flex bg-gray-50 p-1 rounded-xl">
+                    <label className={`flex-1 text-center py-2.5 rounded-lg cursor-pointer text-[13px] font-semibold transition-all ${loginForm.type === 'company' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}>
+                      <input type="radio" className="hidden" checked={loginForm.type === 'company'} onChange={()=>setLoginForm({...loginForm, type: 'company'})} />
+                      {t.domestic}
+                    </label>
+                    <label className={`flex-1 text-center py-2.5 rounded-lg cursor-pointer text-[13px] font-semibold transition-all ${loginForm.type === 'buyer' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}>
+                      <input type="radio" className="hidden" checked={loginForm.type === 'buyer'} onChange={()=>setLoginForm({...loginForm, type: 'buyer'})} />
+                      {t.buyer}
+                    </label>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.userId}</label>
+                      <input type="text" value={loginForm.id} onChange={e=>setLoginForm({...loginForm, id:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all placeholder-gray-400" placeholder={t.idPlaceholder} />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.password}</label>
+                      <input type="password" value={loginForm.pw} onChange={e=>setLoginForm({...loginForm, pw:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all placeholder-gray-400" placeholder={t.pwPlaceholder} />
+                    </div>
+                  </div>
+                  <button type="submit" className="w-full bg-gray-900 text-white font-medium text-sm py-3.5 rounded-xl hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                    {t.continue} &rarr;
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         );
       }
 
-      // 내 파트너 목록 (기업은 바이어를, 바이어는 기업을 봄)
       const partnerType = user.type === 'company' ? 'buyer' : 'company';
-      const partners = profiles.filter(p => p.userType === partnerType);
+      
+      // 사용자 행사명에 일치하는 파트너만 필터링 (다중 행사 독립성 보장)
+      const partners = profiles.filter(p => {
+        if (p.userType !== partnerType) return false;
+        const pEventName = p.eventName || p.profileData?.eventName || t.unnamedEvent;
+        return pEventName === eventInfo.name;
+      });
       
       const mySentMeetings = meetings.filter(m => m.requesterId === user.id);
       const myReceivedMeetings = meetings.filter(m => m.receiverId === user.id);
 
       return (
-        <div className="max-w-5xl mx-auto p-4 sm:p-6 pb-20">
-          <header className="flex justify-between items-center mb-8 border-b pb-4">
-            <h1 className="text-2xl font-bold text-blue-900">B2B 온라인 미팅 센터</h1>
-            <div className="flex items-center gap-4">
-              <span className="font-semibold text-gray-600">환영합니다, {user.id}님</span>
-              <button onClick={() => window.location.reload()} className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300">로그아웃</button>
+        <div className="max-w-6xl mx-auto p-6 sm:p-10 pb-32 fade-in">
+          <header className="flex justify-between items-center py-4 border-b border-gray-200 mb-10">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-gray-900 text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-sm">B.</div>
+              <div>
+                <h1 className="text-lg font-bold tracking-tight text-gray-900 leading-none mb-1">
+                  {eventInfo.name}
+                </h1>
+                <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+                  {t.workspace}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-5">
+              <div className="text-right hidden sm:block">
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{user.type === 'company' ? t.companyTag : t.buyerTag}</p>
+                <p className="text-sm font-medium text-gray-900">{user.id}</p>
+              </div>
+              <div className="w-px h-8 bg-gray-200"></div>
+              <LanguageToggle />
+              <button onClick={handleLogout} className="text-sm font-medium text-gray-400 hover:text-gray-900 transition-colors">
+                {t.signOut}
+              </button>
             </div>
           </header>
 
-          <nav className="flex gap-2 mb-6 bg-white p-2 rounded-lg shadow-sm border">
-            <button onClick={() => setActiveTab('partners')} className={`flex-1 py-2 font-bold rounded ${activeTab==='partners'?'bg-blue-100 text-blue-700':'text-gray-500 hover:bg-gray-50'}`}>참가자 리스트 및 신청</button>
-            <button onClick={() => setActiveTab('schedule')} className={`flex-1 py-2 font-bold rounded ${activeTab==='schedule'?'bg-blue-100 text-blue-700':'text-gray-500 hover:bg-gray-50'}`}>내 미팅 일정 확인</button>
-            <button onClick={() => setActiveTab('profile')} className={`flex-1 py-2 font-bold rounded ${activeTab==='profile'?'bg-blue-100 text-blue-700':'text-gray-500 hover:bg-gray-50'}`}>내 프로필 관리</button>
-          </nav>
+          <div className="flex overflow-x-auto mb-10 pb-2">
+            <div className="inline-flex bg-gray-100 p-1 rounded-xl">
+              <button onClick={() => setActiveTab('partners')} className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${activeTab==='partners'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.participants}</button>
+              <button onClick={() => setActiveTab('schedule')} className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${activeTab==='schedule'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.schedule}</button>
+              <button onClick={() => setActiveTab('profile')} className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${activeTab==='profile'?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{t.settings}</button>
+            </div>
+          </div>
 
-          {/* 탭 1: 파트너 목록 */}
-          {activeTab === 'partners' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {partners.length === 0 ? <p className="col-span-full text-center py-10 text-gray-500">아직 등록된 {user.type === 'company' ? '바이어' : '기업'}가 없습니다.</p> : null}
-              {partners.map(p => (
-                <div key={p.userId} className="bg-white p-5 rounded-xl border shadow-sm flex flex-col justify-between">
-                  <div>
-                    <div className="text-xs text-blue-500 font-bold mb-1">{p.profileData.country || '국가 미상'}</div>
-                    <h3 className="text-lg font-bold text-gray-800 mb-2">{p.profileData.name || p.userId}</h3>
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{p.profileData.intro || '소개 내용이 없습니다.'}</p>
-                    <div className="text-xs text-gray-500 mb-4">담당자: {p.profileData.manager || '-'} | 웹사이트: {p.profileData.website || '-'}</div>
+          <div className="fade-in" key={activeTab}>
+            {activeTab === 'partners' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {partners.length === 0 && (
+                  <div className="col-span-full py-20 text-center border border-dashed border-gray-200 rounded-2xl">
+                    <p className="text-sm text-gray-500">{t.noPartners}</p>
                   </div>
-                  <button onClick={() => setApplyModal({ isOpen: true, targetId: p.userId, targetName: p.profileData.name || p.userId })} className="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700">미팅 신청하기</button>
-                </div>
-              ))}
-            </div>
-          )}
+                )}
+                
+                {partners.map(p => (
+                  <div 
+                    key={p.userId} 
+                    onClick={() => setDetailModal({ isOpen: true, profile: p })}
+                    className="bg-white p-7 rounded-2xl border border-gray-200/80 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:border-gray-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full group cursor-pointer"
+                  >
+                    <div className="flex justify-between items-start mb-6">
+                      <span className="px-2.5 py-1 bg-gray-50 text-gray-600 rounded-md text-[11px] font-bold tracking-wide uppercase border border-gray-100">
+                        {p.profileData.country || 'Unknown'}
+                      </span>
+                      <span className="text-[11px] font-medium text-gray-400">{p.userId}</span>
+                    </div>
+                    
+                    <h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight">{p.profileData.name || 'Untitled Company'}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed line-clamp-3 mb-8 flex-grow">{p.profileData.intro || 'No description provided.'}</p>
+                    
+                   <div className="space-y-3 mb-8 pt-6 border-t border-gray-100">
+                      {/* 1. 담당자 */}
+                      <div className="flex justify-between items-center text-sm gap-4">
+                        <span className="text-gray-400 font-medium whitespace-nowrap shrink-0">{t.manager}</span>
+                        <span className="text-gray-900 font-medium text-right truncate">{p.profileData.manager || '-'}</span>
+                      </div>
+                      
+                      {/* 2. 주요 제품 / 관심 분야 (새로 추가된 항목) */}
+                      <div className="flex justify-between items-center text-sm gap-4">
+                        <span className="text-gray-400 font-medium whitespace-nowrap shrink-0">{t.productsInterests}</span>
+                        <span className="text-gray-900 font-medium text-right truncate" title={p.profileData.products}>{p.profileData.products || '-'}</span>
+                      </div>
+                      
+                      {/* 3. 웹사이트 (링크 클릭 및 끊김 방지 적용) */}
+                      <div className="flex justify-between items-center text-sm gap-4">
+                        <span className="text-gray-400 font-medium whitespace-nowrap shrink-0">{t.website}</span>
+                        <span className="text-gray-900 font-medium text-right truncate">
+                          {p.profileData.website ? (
+                            <a 
+                              href={p.profileData.website?.startsWith('http') ? p.profileData.website : `https://${p.profileData.website}`} 
+                              target="_blank" 
+                              onClick={(e) => e.stopPropagation()} // ✨ 카드 모달이 뜨는 현상 방지
+                              className="text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              {p.profileData.website}
+                            </a>
+                          ) : '-'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setApplyModal({ isOpen: true, targetId: p.userId, targetName: p.profileData.name || p.userId });
+                      }} 
+                      className="w-full bg-gray-50 text-gray-900 font-semibold py-3 rounded-xl hover:bg-gray-900 hover:text-white transition-colors duration-200 text-sm"
+                    >
+                      {t.requestMeeting}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
-          {/* 탭 2: 내 일정 확인 */}
-          {activeTab === 'schedule' && (
-            <div className="space-y-8">
-              {/* 받은 신청 */}
-              <div className="bg-white p-5 rounded-xl border shadow-sm">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">📥 내가 받은 미팅 신청</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-100">
-                      <tr><th className="p-3">신청자</th><th className="p-3">희망 시간</th><th className="p-3">메시지</th><th className="p-3">상태</th><th className="p-3 text-center">응답 / 입장</th></tr>
-                    </thead>
-                    <tbody>
-                      {myReceivedMeetings.length===0 && <tr><td colSpan="5" className="text-center p-6 text-gray-400">받은 신청이 없습니다.</td></tr>}
-                      {myReceivedMeetings.map(m => (
-                        <tr key={m.id} className="border-b">
-                          <td className="p-3 font-bold">{m.requesterId}</td>
-                          <td className="p-3 text-blue-700 font-semibold">{m.sessionTime}</td>
-                          <td className="p-3 text-gray-600 max-w-xs truncate" title={m.message}>{m.message || '-'}</td>
-                          <td className="p-3"><span className="bg-gray-100 px-2 py-1 rounded text-xs font-bold">{m.status}</span></td>
-                          <td className="p-3 text-center">
-                            {m.status === '검토 중' && (
-                              <div className="flex gap-1 justify-center">
-                                <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'approve'})} className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600">승인</button>
-                                <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reschedule'})} className="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600">조정</button>
-                                <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reject'})} className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">거절</button>
+            {activeTab === 'schedule' && (
+              <div className="space-y-12">
+                <div className="bg-white rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
+                  <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
+                    <h3 className="text-base font-bold text-gray-900">{t.receivedRequests}</h3>
+                    <p className="text-[13px] text-gray-500 mt-1">{t.receivedDesc}</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-white">
+                        <tr>
+                          <th className="px-8 py-4 font-semibold">{t.thRequester}</th>
+                          <th className="px-8 py-4 font-semibold">{t.thTime}</th>
+                          <th className="px-8 py-4 font-semibold">{t.thMessage}</th>
+                          <th className="px-8 py-4 font-semibold">{t.thStatus}</th>
+                          <th className="px-8 py-4 font-semibold text-right">{t.thAction}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {myReceivedMeetings.length===0 && <tr><td colSpan="5" className="px-8 py-12 text-center text-gray-400 text-sm">{t.noRequests}</td></tr>}
+                        {myReceivedMeetings.map(m => (
+                          <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-8 py-5 font-medium text-gray-900">{m.requesterId}</td>
+                            <td className="px-8 py-5 font-medium text-gray-900">{m.sessionTime}</td>
+                            <td className="px-8 py-5 text-gray-500 max-w-[200px] truncate" title={m.message}>{m.message || '-'}</td>
+                            <td className="px-8 py-5 whitespace-nowrap">{getStatusBadge(m.status)}</td>
+                            <td className="px-8 py-5 text-right whitespace-nowrap">
+                              {m.status === '검토 중' && (
+                                <div className="flex justify-end gap-2">
+                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'approve'})} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors">{t.accept}</button>
+                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reschedule'})} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">{t.reschedule}</button>
+                                  <button onClick={() => setReplyModal({isOpen:true, meetingId: m.id, type:'reject'})} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors">{t.decline}</button>
+                                </div>
+                              )}
+                              {m.status === '승인 완료' && m.zoomLink && (
+                                <a href={m.zoomLink} target="_blank" className="inline-block px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-100">Join Zoom</a>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
+                  <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
+                    <h3 className="text-base font-bold text-gray-900">{t.sentRequests}</h3>
+                    <p className="text-[13px] text-gray-500 mt-1">{t.sentDesc}</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-white">
+                        <tr>
+                          <th className="px-8 py-4 font-semibold">{t.thRecipient}</th>
+                          <th className="px-8 py-4 font-semibold">{t.thTime}</th>
+                          <th className="px-8 py-4 font-semibold">{t.thStatus}</th>
+                          <th className="px-8 py-4 font-semibold text-right">{t.thLink}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {mySentMeetings.length===0 && <tr><td colSpan="4" className="px-8 py-12 text-center text-gray-400 text-sm">{t.noSentRequests}</td></tr>}
+                        {mySentMeetings.map(m => (
+                          <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-8 py-5 font-medium text-gray-900">{m.receiverId}</td>
+                            <td className="px-8 py-5 font-medium text-gray-900">{m.sessionTime}</td>
+                            <td className="px-8 py-5">
+                              <div className="flex items-center gap-3">
+                                {getStatusBadge(m.status)}
+                                {(m.status === '일정 조정 요청' || m.status === '일정상 진행 불가') && m.message && (
+                                  <span className="text-[12px] text-gray-500 truncate max-w-[200px]" title={m.message}>Note: {m.message}</span>
+                                )}
                               </div>
-                            )}
-                            {m.status === '승인 완료' && m.zoomLink && (
-                              <a href={m.zoomLink} target="_blank" className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold inline-block hover:bg-blue-700">Zoom 입장</a>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                            </td>
+                            <td className="px-8 py-5 text-right whitespace-nowrap">
+                              {m.status === '승인 완료' ? (
+                                m.zoomLink ? <a href={m.zoomLink} target="_blank" className="inline-block px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-100">Join Zoom</a> 
+                                : <span className="text-[12px] font-medium text-gray-400">{t.waitingLink}</span>
+                              ) : <span className="text-gray-300">-</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
+            )}
 
-              {/* 보낸 신청 */}
-              <div className="bg-white p-5 rounded-xl border shadow-sm">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">📤 내가 보낸 미팅 신청</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-100">
-                      <tr><th className="p-3">피신청자</th><th className="p-3">신청 시간</th><th className="p-3">상태 및 회신 메시지</th><th className="p-3 text-center">Zoom 입장</th></tr>
-                    </thead>
-                    <tbody>
-                      {mySentMeetings.length===0 && <tr><td colSpan="4" className="text-center p-6 text-gray-400">보낸 신청이 없습니다.</td></tr>}
-                      {mySentMeetings.map(m => (
-                        <tr key={m.id} className="border-b">
-                          <td className="p-3 font-bold">{m.receiverId}</td>
-                          <td className="p-3 text-blue-700 font-semibold">{m.sessionTime}</td>
-                          <td className="p-3">
-                            <span className="bg-gray-100 px-2 py-1 rounded text-xs font-bold mr-2">{m.status}</span>
-                            <span className="text-xs text-gray-500">{m.status === '일정 조정 요청' || m.status === '일정상 진행 불가' ? `사유: ${m.message}` : ''}</span>
-                          </td>
-                          <td className="p-3 text-center">
-                            {m.status === '승인 완료' ? (
-                              m.zoomLink ? <a href={m.zoomLink} target="_blank" className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700">Zoom 입장</a> : <span className="text-xs text-gray-400">링크 대기중</span>
-                            ) : '-'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            {activeTab === 'profile' && (
+              <div className="bg-white rounded-3xl border border-gray-200/80 shadow-sm max-w-3xl mx-auto overflow-hidden">
+                <div className="px-8 py-8 border-b border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-900">{t.companyProfile}</h3>
+                  <p className="text-sm text-gray-500 mt-2">{t.profileDesc}</p>
+                </div>
+                <div className="p-8 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.companyName}</label>
+                      <input type="text" value={myProfile.name || ''} onChange={e=>setMyProfile({...myProfile, name:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.countryRegion}</label>
+                      <input type="text" value={myProfile.country || ''} onChange={e=>setMyProfile({...myProfile, country:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.contactPerson}</label>
+                      <input type="text" value={myProfile.manager || ''} onChange={e=>setMyProfile({...myProfile, manager:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.aboutCompany}</label>
+                      <textarea value={myProfile.intro || ''} onChange={e=>setMyProfile({...myProfile, intro:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm h-32 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all resize-none"></textarea>
+                    </div>
+                    <div>
+                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.productsInterests}</label>
+                      <input type="text" value={myProfile.products || ''} onChange={e=>setMyProfile({...myProfile, products:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.websiteUrl}</label>
+                      <input type="url" value={myProfile.website || ''} onChange={e=>setMyProfile({...myProfile, website:e.target.value})} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" placeholder="https://" />
+                    </div>
+                  </div>
+                </div>
+                <div className="px-8 py-5 bg-gray-50/80 border-t border-gray-100 flex justify-end">
+                  <button onClick={saveProfile} className="px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-black hover:shadow-md transition-all duration-200">
+                    {loading ? t.saving : t.saveChanges}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 기업 상세 정보 모달 */}
+          {detailModal.isOpen && detailModal.profile && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in">
+              <div className="bg-white rounded-3xl p-8 w-full max-w-2xl shadow-2xl border border-gray-100 relative max-h-[90vh] overflow-y-auto">
+                <button 
+                  onClick={() => setDetailModal({isOpen: false, profile: null})}
+                  className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <div className="mb-8 pr-8">
+                  <span className="px-2.5 py-1 bg-gray-50 text-gray-600 rounded-md text-[11px] font-bold tracking-wide uppercase border border-gray-100 inline-block mb-4">
+                    {detailModal.profile.profileData.country || 'Unknown'}
+                  </span>
+                  <h3 className="font-bold text-2xl text-gray-900 mb-2">{detailModal.profile.profileData.name || 'Untitled Company'}</h3>
+                  <p className="text-sm font-medium text-gray-400">{detailModal.profile.userId}</p>
+                </div>
+
+                <div className="space-y-8">
+                  <div>
+                    <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-3">{t.aboutCompany}</h4>
+                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50/50 p-5 rounded-2xl border border-gray-100">
+                      {detailModal.profile.profileData.intro || '-'}
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-2">
+                    <div>
+                      <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.manager}</h4>
+                      <p className="text-sm font-medium text-gray-900">{detailModal.profile.profileData.manager || '-'}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.productsInterests}</h4>
+                      <p className="text-sm font-medium text-gray-900">{detailModal.profile.profileData.products || '-'}</p>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.websiteUrl}</h4>
+                      {detailModal.profile.profileData.website ? (
+                        <a href={detailModal.profile.profileData.website?.startsWith('http') ? detailModal.profile.profileData.website : `https://${detailModal.profile.profileData.website}`} target="_blank" className="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+                          {detailModal.profile.profileData.website}
+                        </a>
+                      ) : '-'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-10 pt-6 border-t border-gray-100 flex justify-end gap-3">
+                  <button 
+                    onClick={() => setDetailModal({isOpen: false, profile: null})} 
+                    className="px-6 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+                  >
+                    {t.close}
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const p = detailModal.profile;
+                      setDetailModal({isOpen: false, profile: null});
+                      setApplyModal({ isOpen: true, targetId: p.userId, targetName: p.profileData.name || p.userId });
+                    }} 
+                    className="px-8 py-3 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                  >
+                    {t.requestMeeting}
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* 탭 3: 프로필 관리 */}
-          {activeTab === 'profile' && (
-            <div className="bg-white p-6 rounded-xl border shadow-sm max-w-2xl mx-auto">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">내 회사 프로필 작성</h3>
-              <p className="text-sm text-gray-500 mb-6">작성하신 내용은 파트너가 미팅 신청 시 참고하게 됩니다.</p>
-              <div className="space-y-4">
-                <div><label className="block text-sm font-bold mb-1">회사명</label><input type="text" value={myProfile.name} onChange={e=>setMyProfile({...myProfile, name:e.target.value})} className="w-full p-2 border rounded" /></div>
-                <div className="flex gap-4">
-                  <div className="flex-1"><label className="block text-sm font-bold mb-1">국가</label><input type="text" value={myProfile.country} onChange={e=>setMyProfile({...myProfile, country:e.target.value})} className="w-full p-2 border rounded" /></div>
-                  <div className="flex-1"><label className="block text-sm font-bold mb-1">담당자(직책)</label><input type="text" value={myProfile.manager} onChange={e=>setMyProfile({...myProfile, manager:e.target.value})} className="w-full p-2 border rounded" /></div>
-                </div>
-                <div><label className="block text-sm font-bold mb-1">회사 소개</label><textarea value={myProfile.intro} onChange={e=>setMyProfile({...myProfile, intro:e.target.value})} className="w-full p-2 border rounded h-24" placeholder="회사 소개를 입력하세요"></textarea></div>
-                <div><label className="block text-sm font-bold mb-1">주요 제품 / 관심 품목</label><input type="text" value={myProfile.products} onChange={e=>setMyProfile({...myProfile, products:e.target.value})} className="w-full p-2 border rounded" /></div>
-                <div><label className="block text-sm font-bold mb-1">홈페이지</label><input type="text" value={myProfile.website} onChange={e=>setMyProfile({...myProfile, website:e.target.value})} className="w-full p-2 border rounded" placeholder="https://" /></div>
-                <button onClick={saveProfile} className="w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700">{loading ? '저장 중...' : '프로필 저장하기'}</button>
-              </div>
-            </div>
-          )}
-
-          {/* 신청 모달 */}
+          {/* 미팅 신청 모달 */}
           {applyModal.isOpen && (
-            <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-              <form onSubmit={handleApplyMeeting} className="bg-white rounded-xl p-6 w-full max-w-sm">
-                <h3 className="font-bold text-lg mb-4">[{applyModal.targetName}]에게 미팅 신청</h3>
-                <div className="mb-4">
-                  <label className="block text-sm font-bold mb-2">희망 시간 선택</label>
-                  <select name="time" required className="w-full p-2 border rounded outline-none focus:border-blue-500">
-                    <option value="">-- 시간 선택 --</option>
-                    {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in">
+              <form onSubmit={handleApplyMeeting} className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-100 relative">
+                <h3 className="font-bold text-xl text-gray-900 mb-6">
+                  {t.requestMeeting} <br/> <span className="text-gray-400 text-sm font-medium mt-1 block">{t.with} {applyModal.targetName}</span>
+                </h3>
+                <div className="mb-5">
+                  <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.selectTime}</label>
+                  <select name="time" required className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all">
+                    <option value="">{t.chooseSlot}</option>
+                    {eventInfo.timeSlots?.map(time => <option key={time} value={time}>{time}</option>)}
                   </select>
                 </div>
-                <div className="mb-6">
-                  <label className="block text-sm font-bold mb-2">요청 메시지 (선택)</label>
-                  <textarea name="message" className="w-full p-2 border rounded resize-none h-20" placeholder="간단한 인사말이나 논의 안건을 적어주세요."></textarea>
+                <div className="mb-8">
+                  <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.messageOptional}</label>
+                  <textarea name="message" className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm h-24 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all resize-none" placeholder={t.addBriefNote}></textarea>
                 </div>
-                <div className="flex gap-2 justify-end">
-                  <button type="button" onClick={() => setApplyModal({isOpen:false})} className="px-4 py-2 border rounded hover:bg-gray-50">취소</button>
-                  <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded font-bold">{loading ? '처리중...' : '신청하기'}</button>
+                <div className="flex gap-3 justify-end">
+                  <button type="button" onClick={() => setApplyModal({isOpen:false})} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">{t.cancel}</button>
+                  <button type="submit" disabled={loading} className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-black transition-colors">{loading ? t.sending : t.sendRequest}</button>
                 </div>
               </form>
             </div>
           )}
 
-          {/* 응답 모달 */}
+          {/* 수락/거절/조정 모달 */}
           {replyModal.isOpen && (
-            <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-              <form onSubmit={handleReplyMeeting} className="bg-white rounded-xl p-6 w-full max-w-sm">
-                <h3 className="font-bold text-lg mb-4">
-                  {replyModal.type === 'approve' ? '미팅 승인' : replyModal.type === 'reschedule' ? '일정 조정 요청' : '진행 불가 안내'}
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in">
+              <form onSubmit={handleReplyMeeting} className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-100 relative">
+                <h3 className="font-bold text-xl text-gray-900 mb-2">
+                  {replyModal.type === 'approve' ? t.acceptRequest : replyModal.type === 'reschedule' ? t.reschedule : t.declineRequest}
                 </h3>
-                
-                {replyModal.type === 'approve' && <p className="text-sm text-gray-600 mb-4">이 미팅을 승인하시겠습니까? 승인 후 관리자가 Zoom 링크를 배포합니다.</p>}
-                
+                <p className="text-sm text-gray-500 mb-6 border-b border-gray-100 pb-6">
+                  {replyModal.type === 'approve' ? t.acceptModalDesc : 
+                   replyModal.type === 'reschedule' ? t.proposeNewTime : t.declineModalDesc}
+                </p>
                 {replyModal.type === 'reschedule' && (
-                  <div className="mb-4">
-                    <label className="block text-sm font-bold mb-1">변경 희망 시간</label>
-                    <select name="newTime" required className="w-full p-2 border rounded mb-3">
-                      <option value="">-- 시간 선택 --</option>
-                      {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                    <label className="block text-sm font-bold mb-1">전달할 메시지</label>
-                    <input type="text" name="replyMessage" required placeholder="예: 이 시간으로 변경 가능할까요?" className="w-full p-2 border rounded" />
+                  <div className="mb-8 space-y-5">
+                    <div>
+                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.proposedTime}</label>
+                      <select name="newTime" required className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all">
+                        <option value="">{t.chooseSlot}</option>
+                        {eventInfo.timeSlots?.map(time => <option key={time} value={time}>{time}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.noteToSender}</label>
+                      <input type="text" name="replyMessage" required placeholder={lang === 'ko' ? "예시: 이 시간은 어떠신가요?" : "Ex: Are you available at this time?"} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
+                    </div>
                   </div>
                 )}
-
                 {replyModal.type === 'reject' && (
-                  <div className="mb-4">
-                    <label className="block text-sm font-bold mb-1">사유 기재 (선택)</label>
-                    <input type="text" name="replyMessage" placeholder="예: 일정상 진행이 어렵습니다." className="w-full p-2 border rounded" />
+                  <div className="mb-8">
+                    <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t.reasonOptional}</label>
+                    <input type="text" name="replyMessage" placeholder={t.typeBriefReason} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all" />
                   </div>
                 )}
-
-                <div className="flex gap-2 justify-end mt-2">
-                  <button type="button" onClick={() => setReplyModal({isOpen:false})} className="px-4 py-2 border rounded hover:bg-gray-50">취소</button>
-                  <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded font-bold">확인</button>
+                <div className="flex gap-3 justify-end">
+                  <button type="button" onClick={() => setReplyModal({isOpen:false})} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">{t.cancel}</button>
+                  <button type="submit" disabled={loading} className={`px-6 py-2.5 text-white rounded-xl text-sm font-medium transition-colors ${
+                    replyModal.type === 'approve' ? 'bg-blue-600 hover:bg-blue-700' :
+                    replyModal.type === 'reschedule' ? 'bg-gray-800 hover:bg-gray-900' :
+                    'bg-red-600 hover:bg-red-700'
+                  }`}>{t.confirm}</button>
                 </div>
               </form>
             </div>
@@ -380,6 +839,4 @@
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
-  </script>
-</body>
-</html>
+  </script></body></html>
