@@ -231,13 +231,18 @@
         setDriveModal({ isOpen: true, profile: p, links: matchedLinks, selectedLink: null });
       };
 
-      // 🌟 드라이브 링크를 iframe용 미리보기 URL로 변환
       const getPreviewLink = (url) => {
-        if(!url) return "";
-        if(url.includes('/view')) return url.replace('/view', '/preview');
-        if(url.includes('/edit')) return url.replace('/edit', '/preview');
-        return url;
-      };
+  if(!url) return "";
+  
+  // 구글 드라이브 주소에서 파일 ID(ID값)만 추출하는 로직
+  const match = url.match(/\/d\/([^/]+)/);
+  if (match && match[1]) {
+    const fileId = match[1];
+    // 구글 문서 뷰어 주소로 리턴 (가장 확실하게 바로 뜨는 방식)
+    return `https://docs.google.com/gview?url=https://drive.google.com/uc?id=${fileId}&embedded=true`;
+  }
+  return url;
+};
 
       const getParsedEvents = () => {
         let parsed = [];
